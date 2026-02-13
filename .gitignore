@@ -21,3 +21,4 @@ vendor/
 # Code Assistant
 CLAUDE.md
 MILESTONES.md
+.claude/
