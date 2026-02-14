@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: pfm-postgres
+    environment:
+      POSTGRES_DB: pfm_dev
+      POSTGRES_USER: pfm_user
+      POSTGRES_PASSWORD: dev_secret_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pfm_user -d pfm_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - pfm-network
+
+  otel-collector:
+    image: otel/opentelemetry-collector:0.145.0
+    container_name: pfm-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "13133:13133" # health check
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    networks:
+      - pfm-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+    driver: local
+
+
+networks:
+  pfm-network:
+    driver: bridge
