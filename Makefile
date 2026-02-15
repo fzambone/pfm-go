@@ -1,4 +1,4 @@
-.PHONY: help up down logs ps clean db-shell db-logs otel-logs
+.PHONY: help up down logs ps clean db-shell db-logs otel-logs build-docker
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -27,3 +27,8 @@ db-logs: ## Show PostgreSQL logs
 
 otel-logs: ## Show OTEL Collector logs
 	docker compose -f deploy/docker/docker-compose.yml logs -f otel-collector
+
+build-docker: ## Build the application Docker image
+	docker build -f deploy/docker/Dockerfile -t pfm-go:dev \
+		--build-arg GIT_COMMIT=$$(git rev-parse --short HEAD) \
+		--build-arg BUILD_TIME=$$(date -u +%Y-%m-%dT%H:%M:%SZ) .
