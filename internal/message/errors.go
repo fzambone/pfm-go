@@ -11,3 +11,14 @@ var (
 	ErrMoneyOverflow        = errors.New("money arithmetic: overflow")
 	ErrMoneyInvalidCurrency = errors.New("money currency: unsupported currency")
 )
+
+// Validation errors.
+const (
+	MsgRequired    = "is required"
+	MsgMinLen      = "must be at least %d characters"
+	MsgMaxLen      = "must be at most %d characters"
+	MsgRange       = "must be between %d and %d"
+	MsgOneOf       = "must be one of %v"
+	MsgPositive    = "must be positive"
+	MsgNonNegative = "must not be negative"
+)
