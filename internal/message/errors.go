@@ -22,3 +22,11 @@ const (
 	MsgPositive    = "must be positive"
 	MsgNonNegative = "must not be negative"
 )
+
+// Config errors.
+const (
+	ErrConfigParse       = "config parse %s: %w"
+	ErrConfigPortRange   = "config %s: must be between 1 and 65535, got %d"
+	ErrConfigInvalidBool = "must be true/false, 1/0, or yes/no"
+	ErrConfigRequired    = "%s is required but not set"
+)
