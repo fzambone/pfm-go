@@ -1,4 +1,4 @@
-.PHONY: help up down logs ps clean db-shell db-logs otel-logs build-docker
+.PHONY: help up down logs ps clean db-shell db-logs otel-logs build-docker test lint build ci
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -32,3 +32,14 @@ build-docker: ## Build the application Docker image
 	docker build -f deploy/docker/Dockerfile -t pfm-go:dev \
 		--build-arg GIT_COMMIT=$$(git rev-parse --short HEAD) \
 		--build-arg BUILD_TIME=$$(date -u +%Y-%m-%dT%H:%M:%SZ) .
+
+test: ## Run tests with race detector
+	go test ./... -race -count=1
+
+lint: ## Run golangci-lint
+	golangci-lint run ./...
+
+build: ## Build the application binary
+	go build -ldflags="-X main.Version=$$(git describe --tags --always --dirty) -X main.GitCommit=$$(git rev-parse --short HEAD) -X main.BuildTime=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o pfm ./cmd/pfm/
+
+ci: lint test build ## Run full CI gate (lint + test + build)

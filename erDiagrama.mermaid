@@ -1,0 +1,137 @@
+erDiagram
+    %% --- BASE AUDITABLE INTERFACE (Conceptual) ---
+    %% All entities below include these 4 fields implicitly
+    AUDITABLE_ENTITY {
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by
+        UUID updated_by
+    }
+
+    %% --- SAAS / AUTH LAYER ---
+    HOUSEHOLD {
+        UUID id PK
+        VARCHAR name
+        BOOLEAN is_active
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by
+        UUID updated_by
+    }
+
+    APP_USER {
+        UUID id PK
+        VARCHAR email UK
+        VARCHAR password_hash
+        VARCHAR full_name
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+
+    HOUSEHOLD_MEMBER {
+        UUID household_id PK, FK
+        UUID user_id PK, FK
+        VARCHAR role "ADMIN, VIEWER"
+        TIMESTAMP joined_at
+        UUID invited_by
+    }
+
+    %% --- FINANCIAL ACCOUNTS ---
+    ACCOUNT {
+        UUID id PK
+        UUID household_id FK
+        VARCHAR name
+        VARCHAR type "CHECKING, CREDIT_CARD, INVESTMENT"
+        CHAR(3) currency_code "USD, BRL"
+        DECIMAL current_balance
+        BOOLEAN is_active
+        %% Auditing
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by
+        UUID updated_by
+    }
+
+    CREDIT_CARD_SETTINGS {
+        UUID account_id PK, FK
+        INTEGER closing_day
+        INTEGER due_day
+        DECIMAL limit_amount
+    }
+
+    %% --- CLASSIFICATION ---
+    CATEGORY {
+        UUID id PK
+        UUID household_id FK
+        VARCHAR name
+        VARCHAR icon_slug
+        VARCHAR type "INCOME, EXPENSE"
+        UUID parent_id FK
+        %% Auditing
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by
+        UUID updated_by
+    }
+
+    %% --- TRANSACTIONS & INSTALLMENTS ---
+    INSTALLMENT_PLAN {
+        UUID id PK
+        UUID household_id FK
+        VARCHAR description
+        DECIMAL total_amount
+        INTEGER total_installments
+        %% Auditing
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by
+        UUID updated_by
+    }
+
+    TRANSACTION {
+        UUID id PK
+        UUID household_id FK
+        UUID account_id FK
+        UUID category_id FK
+        UUID installment_plan_id FK "Nullable"
+        UUID transfer_correlation_id "Nullable"
+
+        VARCHAR description
+
+        %% Monetary Values
+        DECIMAL amount
+        CHAR(3) currency_code
+        DECIMAL exchange_rate
+
+        %% Dates
+        TIMESTAMP transaction_date "Log Date"
+        DATE effective_date "Cash Flow Date"
+
+        %% Status & Metadata
+        VARCHAR type "INCOME, EXPENSE, TRANSFER"
+        VARCHAR status "PENDING, POSTED"
+        INTEGER installment_number
+        BOOLEAN is_manual
+        VARCHAR external_bank_id
+
+        %% Auditing
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by
+        UUID updated_by
+    }
+
+    %% --- RELATIONSHIPS ---
+    HOUSEHOLD ||--|{ HOUSEHOLD_MEMBER : "has"
+    APP_USER ||--|{ HOUSEHOLD_MEMBER : "belongs to"
+
+    HOUSEHOLD ||--|{ ACCOUNT : "owns"
+    ACCOUNT ||--o| CREDIT_CARD_SETTINGS : "configures"
+
+    HOUSEHOLD ||--|{ CATEGORY : "defines"
+    CATEGORY ||--o{ CATEGORY : "parent of"
+
+    ACCOUNT ||--|{ TRANSACTION : "logs"
+    CATEGORY ||--o{ TRANSACTION : "tags"
+
+    INSTALLMENT_PLAN ||--|{ TRANSACTION : "generates"
