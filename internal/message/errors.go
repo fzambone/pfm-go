@@ -30,3 +30,19 @@ const (
 	ErrConfigInvalidBool = "must be true/false, 1/0, or yes/no"
 	ErrConfigRequired    = "%s is required but not set"
 )
+
+// Observe log messages.
+const (
+	MsgLoggerReady    = "logger initialized"
+	MsgTracerReady    = "tracer provider initialized"
+	MsgTracerShutdown = "tracer provider shut down"
+	MsgServerStarting = "http server starting"
+	MsgServerStopped  = "http server stopped"
+	MsgShuttingDown   = "shutting down"
+)
+
+// Server messages.
+const (
+	MsgServerError         = "server error"
+	MsgServerShutdownError = "server shutdown error"
+)
