@@ -15,6 +15,7 @@ import (
 	pfmhttp "github.com/zambone/pfm-go/internal/adapter/http"
 	"github.com/zambone/pfm-go/internal/message"
 	"github.com/zambone/pfm-go/internal/platform/config"
+	"github.com/zambone/pfm-go/internal/platform/database"
 	"github.com/zambone/pfm-go/internal/platform/observe"
 )
 
@@ -64,6 +65,11 @@ func run() error {
 	_ = tp
 	slog.InfoContext(ctx, message.MsgTracerReady)
 
+	db, err := database.Open(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf("open database: %w", err)
+	}
+
 	var shuttingDown atomic.Bool
 
 	mux := http.NewServeMux()
@@ -96,6 +102,12 @@ func run() error {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.ErrorContext(shutdownCtx, message.MsgServerShutdownError, "error", err)
 	}
+
+	if err := db.Close(); err != nil {
+		slog.ErrorContext(shutdownCtx, message.MsgDBCloseError, "error", err)
+	}
+	slog.InfoContext(context.Background(), message.MsgDBClosed)
+
 	slog.InfoContext(context.Background(), message.MsgServerStopped)
 
 	if err := tracerShutdown(shutdownCtx); err != nil {

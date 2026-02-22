@@ -19,7 +19,4 @@ Thumbs.db
 vendor/
 
 # Code Assistant
-CLAUDE.md
-AGENTS.md
-MILESTONES.md
 .claude/
