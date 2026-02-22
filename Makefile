@@ -1,4 +1,4 @@
-.PHONY: help up down logs ps clean db-shell db-logs otel-logs build-docker test lint build ci
+.PHONY: help up down logs ps clean db-shell db-logs otel-logs build-docker test test-integration lint build ci
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -42,4 +42,7 @@ lint: ## Run golangci-lint
 build: ## Build the application binary
 	go build -ldflags="-X main.Version=$$(git describe --tags --always --dirty) -X main.GitCommit=$$(git rev-parse --short HEAD) -X main.BuildTime=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o pfm ./cmd/pfm/
 
-ci: lint test build ## Run full CI gate (lint + test + build)
+ci: lint test-integration build ## Run full CI gate (lint + test + build)
+
+test-integration: ## Run full integration tests suite with race detector (requires Docker)
+	go test -tags integration -race -count=1 -v ./...

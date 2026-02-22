@@ -24,6 +24,13 @@ func TestLoad_DefaultValues(t *testing.T) {
 		{"database user", cfg.DatabaseUser, "pfm_user"},
 		{"database name", cfg.DatabaseName, "pfm_dev"},
 		{"database SSL mode", cfg.DatabaseSSLMode, "disable"},
+		{"db max open conns", cfg.DBMaxOpenConns, 25},
+		{"db max idle conns", cfg.DBMaxIdleConns, 5},
+		{"db conn max lifetime sec", cfg.DBConnMaxLifetimeSec, 300},
+		{"db conn max idle time sec", cfg.DBConnMaxIdleTimeSec, 60},
+		{"db connect timeout sec", cfg.DBConnectTimeoutSec, 5},
+		{"db startup retries", cfg.DBStartupRetries, 5},
+		{"db startup retry delay sec", cfg.DBStartupRetryDelaySec, 2},
 		{"shutdown timeout seconds", cfg.ShutdownTimeoutSec, 15},
 		{"log level", cfg.LogLevel, "info"},
 	}
@@ -50,6 +57,13 @@ func TestLoad_EnvironmentOverridesDefaults(t *testing.T) {
 		{"database password", "DATABASE_PASSWORD", "supersecret", func(c *config.Config) any { return c.DatabasePassword }, "supersecret"},
 		{"database name", "DATABASE_NAME", "pfm_prod", func(c *config.Config) any { return c.DatabaseName }, "pfm_prod"},
 		{"database SSL mode", "DATABASE_SSL_MODE", "require", func(c *config.Config) any { return c.DatabaseSSLMode }, "require"},
+		{"db max open conns", "DB_MAX_OPEN_CONNS", "50", func(c *config.Config) any { return c.DBMaxOpenConns }, 50},
+		{"db max idle conns", "DB_MAX_IDLE_CONNS", "10", func(c *config.Config) any { return c.DBMaxIdleConns }, 10},
+		{"db conn max lifetime sec", "DB_CONN_MAX_LIFETIME_SEC", "600", func(c *config.Config) any { return c.DBConnMaxLifetimeSec }, 600},
+		{"db conn max idle time sec", "DB_CONN_MAX_IDLE_TIME_SEC", "120", func(c *config.Config) any { return c.DBConnMaxIdleTimeSec }, 120},
+		{"db connect timeout sec", "DB_CONNECT_TIMEOUT_SEC", "10", func(c *config.Config) any { return c.DBConnectTimeoutSec }, 10},
+		{"db startup retries", "DB_STARTUP_RETRIES", "3", func(c *config.Config) any { return c.DBStartupRetries }, 3},
+		{"db startup retry delay sec", "DB_STARTUP_RETRY_DELAY_SEC", "5", func(c *config.Config) any { return c.DBStartupRetryDelaySec }, 5},
 		{"shutdown timeout", "SHUTDOWN_TIMEOUT_SEC", "30", func(c *config.Config) any { return c.ShutdownTimeoutSec }, 30},
 		{"log level", "LOG_LEVEL", "debug", func(c *config.Config) any { return c.LogLevel }, "debug"},
 	}
@@ -74,6 +88,13 @@ func TestLoad_InvalidIntegerValue_ReturnsError(t *testing.T) {
 		{"HTTP port", "HTTP_PORT"},
 		{"database port", "DATABASE_PORT"},
 		{"shutdown timeout", "SHUTDOWN_TIMEOUT_SEC"},
+		{"db max open conns", "DB_MAX_OPEN_CONNS"},
+		{"db max idle conns", "DB_MAX_IDLE_CONNS"},
+		{"db conn max lifetime sec", "DB_CONN_MAX_LIFETIME_SEC"},
+		{"db conn max idle time sec", "DB_CONN_MAX_IDLE_TIME_SEC"},
+		{"db connect timeout sec", "DB_CONNECT_TIMEOUT_SEC"},
+		{"db startup retries", "DB_STARTUP_RETRIES"},
+		{"db startup retry delay sec", "DB_STARTUP_RETRY_DELAY_SEC"},
 	}
 
 	for _, tt := range tests {

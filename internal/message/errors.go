@@ -49,3 +49,19 @@ const (
 	MsgServerShutdownError = "server shutdown error"
 	MsgHealthNotReady      = "service not ready"
 )
+
+// Database log messages.
+const (
+	MsgDBConnecting = "connecting to database"
+	MsgDBPingRetry  = "database ping failed, retrying"
+	MsgDBReady      = "database connection pool ready"
+	MsgDBClosed     = "database connection pool closed"
+	MsgDBCloseError = "database connection pool close failed"
+)
+
+// Database errors.
+const (
+	ErrDBOpen        = "database: open driver: %w"
+	ErrDBPing        = "database: ping after %d retries: %w"
+	ErrDBContextDone = "database: context cancelled during startup: %w"
+)
