@@ -13,7 +13,7 @@ import (
 func TestNewTracerProvider_WhenNoEndpoint_ReturnsProvider(t *testing.T) {
 	cfg := &config.Config{OTELEndpoint: ""}
 
-	tp, shutdown, err := observe.NewTracerProvider(context.Background(), cfg, "test-service")
+	tp, shutdown, err := observe.NewTracerProvider(context.Background(), cfg, "test-service", "v-0.0.0-test")
 
 	require.NoError(t, err)
 	assert.NotNil(t, tp)
@@ -23,9 +23,22 @@ func TestNewTracerProvider_WhenNoEndpoint_ReturnsProvider(t *testing.T) {
 func TestNewTracerProvider_WhenNoEndpoint_ShutdownCleanly(t *testing.T) {
 	cfg := &config.Config{OTELEndpoint: ""}
 
-	_, shutdown, err := observe.NewTracerProvider(context.Background(), cfg, "test-service")
+	_, shutdown, err := observe.NewTracerProvider(context.Background(), cfg, "test-service", "v-0.0.0-test")
 	require.NoError(t, err)
 
 	err = shutdown(context.Background())
+	assert.NoError(t, err)
+}
+
+func TestNewTracerProvider_ShutdownWithCancelledContext_ReturnsNoError(t *testing.T) {
+	cfg := &config.Config{OTELEndpoint: ""}
+
+	_, shutdown, err := observe.NewTracerProvider(context.Background(), cfg, "test-service", "v-0.0.0-test")
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel immediately before shutdown
+
+	err = shutdown(ctx)
 	assert.NoError(t, err)
 }

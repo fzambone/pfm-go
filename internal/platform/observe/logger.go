@@ -5,37 +5,23 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"strings"
 
 	"github.com/zambone/pfm-go/internal/platform/ctxutil"
 	"go.opentelemetry.io/otel/trace"
 )
 
 // NewLogger builds the application's structured JSON logger.
-func NewLogger(level string, w io.Writer) *slog.Logger {
+func NewLogger(level slog.Level, w io.Writer) *slog.Logger {
 	if w == nil {
 		w = os.Stdout
 	}
 
 	handler := slog.NewJSONHandler(w, &slog.HandlerOptions{
 		AddSource: true,
-		Level:     parseLevel(level),
+		Level:     level,
 	})
 
 	return slog.New(&contextHandler{next: handler})
-}
-
-func parseLevel(level string) slog.Level {
-	switch strings.ToLower(strings.TrimSpace(level)) {
-	case "debug":
-		return slog.LevelDebug
-	case "warn", "warning":
-		return slog.LevelWarn
-	case "error":
-		return slog.LevelError
-	default:
-		return slog.LevelInfo
-	}
 }
 
 type contextHandler struct {

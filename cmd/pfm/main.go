@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -40,19 +41,35 @@ func run() error {
 		return fmt.Errorf("load config: %w", err)
 	}
 
-	logger := observe.NewLogger(cfg.LogLevel, nil)
+	var logLevel slog.Level
+	if err := logLevel.UnmarshalText([]byte(cfg.LogLevel)); err != nil {
+		return fmt.Errorf("parse log level %q: %w", cfg.LogLevel, err)
+	}
+	logger := observe.NewLogger(logLevel, nil)
+
 	slog.SetDefault(logger)
 	slog.InfoContext(ctx, message.MsgLoggerReady)
+	slog.InfoContext(ctx, message.MsgStartupInfo,
+		"version", Version,
+		"build_time", BuildTime,
+		"git_commit", GitCommit,
+		"config", cfg.String(),
+		"log_level", logLevel.String(),
+	)
 
-	tp, tracerShutdown, err := observe.NewTracerProvider(ctx, cfg, "pfm-go")
+	tp, tracerShutdown, err := observe.NewTracerProvider(ctx, cfg, "pfm-go", Version)
 	if err != nil {
 		return fmt.Errorf("init tracer: %w", err)
 	}
 	_ = tp
 	slog.InfoContext(ctx, message.MsgTracerReady)
 
+	var shuttingDown atomic.Bool
+
 	mux := http.NewServeMux()
 	mux.Handle("GET /healthz", pfmhttp.HealthHandler(Version))
+	mux.Handle("GET /health/live", pfmhttp.LiveHandler())
+	mux.Handle("GET /health/ready", pfmhttp.ReadyHandler(&shuttingDown))
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.HTTPPort),
@@ -67,6 +84,7 @@ func run() error {
 	slog.InfoContext(ctx, message.MsgServerStarting, "port", cfg.HTTPPort)
 
 	<-ctx.Done()
+	shuttingDown.Store(true)
 	slog.InfoContext(context.Background(), message.MsgShuttingDown)
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(
@@ -81,7 +99,7 @@ func run() error {
 	slog.InfoContext(context.Background(), message.MsgServerStopped)
 
 	if err := tracerShutdown(shutdownCtx); err != nil {
-		slog.ErrorContext(shutdownCtx, message.MsgTracerShutdown, "error", err)
+		slog.ErrorContext(shutdownCtx, message.MsgTracerShutdownError, "error", err)
 	}
 
 	return nil

@@ -33,16 +33,19 @@ const (
 
 // Observe log messages.
 const (
-	MsgLoggerReady    = "logger initialized"
-	MsgTracerReady    = "tracer provider initialized"
-	MsgTracerShutdown = "tracer provider shut down"
-	MsgServerStarting = "http server starting"
-	MsgServerStopped  = "http server stopped"
-	MsgShuttingDown   = "shutting down"
+	MsgLoggerReady         = "logger initialized"
+	MsgStartupInfo         = "application starting"
+	MsgTracerReady         = "tracer provider initialized"
+	MsgTracerShutdown      = "tracer provider shut down"
+	MsgServerStarting      = "http server starting"
+	MsgServerStopped       = "http server stopped"
+	MsgShuttingDown        = "shutting down"
+	MsgTracerShutdownError = "tracer provider shutdown error"
 )
 
 // Server messages.
 const (
 	MsgServerError         = "server error"
 	MsgServerShutdownError = "server shutdown error"
+	MsgHealthNotReady      = "service not ready"
 )
