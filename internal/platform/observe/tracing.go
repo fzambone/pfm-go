@@ -12,13 +12,16 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
-// NewTracerProvider initializes an OpenTelemetry TracerProvider and registers it
-// as the global provider. When cfg.OTELEndpoint is empty, a provider with no
-// exporter is returned (spans are created but discarded).
+// NewTracerProvider initializes an OpenTelemetry TracerProvider with service name
+// and version in the resource, and register it as the global provider.
+// When cfg.OTELEndpoint is empty, a provider with no  exporter is returned (spans are created but discarded).
 // The caller must invoke the returned shutdown func before process exit.
-func NewTracerProvider(ctx context.Context, cfg *config.Config, serviceName string) (*sdktrace.TracerProvider, func(context.Context) error, error) {
+func NewTracerProvider(ctx context.Context, cfg *config.Config, serviceName, serviceVersion string) (*sdktrace.TracerProvider, func(context.Context) error, error) {
 	res, err := resource.New(ctx,
-		resource.WithAttributes(attribute.String("service.name", serviceName)),
+		resource.WithAttributes(
+			attribute.String("service.name", serviceName),
+			attribute.String("service.version", serviceVersion),
+		),
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("observe: build resource: %w", err)
