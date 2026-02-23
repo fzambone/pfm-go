@@ -26,6 +26,20 @@ type Config struct {
 	DatabaseName string
 	// DatabaseSSLMode is the PostgreSQL SSL mode. Env: DATABASE_SSL_MODE. Default: "disable".
 	DatabaseSSLMode string
+	// DBMaxOpenConns is the maximum number of open connections. Env: DB_MAX_OPEN_CONNS. Default: 25.
+	DBMaxOpenConns int
+	// DBMaxIdleConns is the maximum number of idle connections. Env: DB_MAX_IDLE_CONNS. Default: 5.
+	DBMaxIdleConns int
+	// DBConnMaxLifetimeSec is the maximum connection lifetime in seconds. Env: DB_CONN_MAX_LIFETIME_SEC. Default: 300.
+	DBConnMaxLifetimeSec int
+	// DBConnMaxIdleTimeSec is the maximum idle connection lifetime in seconds. Env: DB_CONN_MAX_IDLE_TIME_SEC. Default: 60.
+	DBConnMaxIdleTimeSec int
+	// DBConnectTimeoutSec is the PostgreSQL connection timeout in seconds. Env: DB_CONNECT_TIMEOUT_SEC. Default: 5.
+	DBConnectTimeoutSec int
+	// DBStartupRetries is the number of ping retries at startup. Env: DB_STARTUP_RETRIES. Default: 5.
+	DBStartupRetries int
+	// DBStartupRetryDelaySec is the base delay between startup retries in seconds. Env: DB_STARTUP_RETRY_DELAY_SEC. Default: 2.
+	DBStartupRetryDelaySec int
 	// ShutdownTimeoutSec is the graceful shutdown timeout in seconds. Env: SHUTDOWN_TIMEOUT_SEC. Default: 15.
 	ShutdownTimeoutSec int
 	// LogLevel is the minimum log level. Env: LOG_LEVEL. Default: "info".
@@ -50,6 +64,35 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	dbMaxOpenConns, err := envInt("DB_MAX_OPEN_CONNS", 25)
+	if err != nil {
+		return nil, err
+	}
+	dbMaxIdleConns, err := envInt("DB_MAX_IDLE_CONNS", 5)
+	if err != nil {
+		return nil, err
+	}
+	dbConnMaxLifetimeSec, err := envInt("DB_CONN_MAX_LIFETIME_SEC", 300)
+	if err != nil {
+		return nil, err
+	}
+	dbConnMaxIdleTimeSec, err := envInt("DB_CONN_MAX_IDLE_TIME_SEC", 60)
+	if err != nil {
+		return nil, err
+	}
+	dbConnectTimeoutSec, err := envInt("DB_CONNECT_TIMEOUT_SEC", 5)
+	if err != nil {
+		return nil, err
+	}
+	dbStartupRetries, err := envInt("DB_STARTUP_RETRIES", 5)
+	if err != nil {
+		return nil, err
+	}
+	dbStartupRetryDelaySec, err := envInt("DB_STARTUP_RETRY_DELAY_SEC", 2)
+	if err != nil {
+		return nil, err
+	}
+
 	shutdownTimeout, err := envInt("SHUTDOWN_TIMEOUT_SEC", 15)
 	if err != nil {
 		return nil, err
@@ -70,18 +113,25 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		HTTPPort:           httpPort,
-		DatabaseHost:       envStr("DATABASE_HOST", "localhost"),
-		DatabasePort:       dbPort,
-		DatabaseUser:       envStr("DATABASE_USER", "pfm_user"),
-		DatabasePassword:   envStr("DATABASE_PASSWORD", "secret"),
-		DatabaseName:       envStr("DATABASE_NAME", "pfm_dev"),
-		DatabaseSSLMode:    envStr("DATABASE_SSL_MODE", "disable"),
-		ShutdownTimeoutSec: shutdownTimeout,
-		LogLevel:           envStr("LOG_LEVEL", "info"),
-		Debug:              debug,
-		RequireOTEL:        requireOTEL,
-		OTELEndpoint:       otelEndpoint,
+		HTTPPort:               httpPort,
+		DatabaseHost:           envStr("DATABASE_HOST", "localhost"),
+		DatabasePort:           dbPort,
+		DatabaseUser:           envStr("DATABASE_USER", "pfm_user"),
+		DatabasePassword:       envStr("DATABASE_PASSWORD", "secret"),
+		DatabaseName:           envStr("DATABASE_NAME", "pfm_dev"),
+		DatabaseSSLMode:        envStr("DATABASE_SSL_MODE", "disable"),
+		DBMaxOpenConns:         dbMaxOpenConns,
+		DBMaxIdleConns:         dbMaxIdleConns,
+		DBConnMaxLifetimeSec:   dbConnMaxLifetimeSec,
+		DBConnMaxIdleTimeSec:   dbConnMaxIdleTimeSec,
+		DBConnectTimeoutSec:    dbConnectTimeoutSec,
+		DBStartupRetries:       dbStartupRetries,
+		DBStartupRetryDelaySec: dbStartupRetryDelaySec,
+		ShutdownTimeoutSec:     shutdownTimeout,
+		LogLevel:               envStr("LOG_LEVEL", "info"),
+		Debug:                  debug,
+		RequireOTEL:            requireOTEL,
+		OTELEndpoint:           otelEndpoint,
 	}
 
 	return cfg, nil
@@ -89,8 +139,14 @@ func Load() (*Config, error) {
 
 func (c *Config) String() string {
 	return fmt.Sprintf(
-		"HTTPPort=%d DatabaseHost=%s DatabasePort=%d DatabaseUser=%s DatabasePassword=**** DatabaseName=%s DatabaseSSLMode=%s ShutdownTimeoutSec=%d LogLevel=%s Debug=%t RequireOTEL=%t OTELEndpoint=%s",
-		c.HTTPPort, c.DatabaseHost, c.DatabasePort, c.DatabaseUser, c.DatabaseName, c.DatabaseSSLMode, c.ShutdownTimeoutSec, c.LogLevel, c.Debug, c.RequireOTEL, c.OTELEndpoint,
+		"HTTPPort=%d DatabaseHost=%s DatabasePort=%d DatabaseUser=%s DatabasePassword=**** "+
+			"DatabaseName=%s DatabaseSSLMode=%s DBMaxOpenConns=%d DBMaxIdleConns=%d DBConnMaxLifetimeSec=%d "+
+			"DBConnMaxIdleTimeSec=%d DBConnectTimeoutSec=%d DBStartupRetries=%d DBStartupRetryDelaySec=%d "+
+			"ShutdownTimeoutSec=%d LogLevel=%s Debug=%t RequireOTEL=%t OTELEndpoint=%s",
+		c.HTTPPort, c.DatabaseHost, c.DatabasePort, c.DatabaseUser,
+		c.DatabaseName, c.DatabaseSSLMode, c.DBMaxOpenConns, c.DBMaxIdleConns, c.DBConnMaxLifetimeSec,
+		c.DBConnMaxIdleTimeSec, c.DBConnectTimeoutSec, c.DBStartupRetries, c.DBStartupRetryDelaySec,
+		c.ShutdownTimeoutSec, c.LogLevel, c.Debug, c.RequireOTEL, c.OTELEndpoint,
 	)
 }
 
