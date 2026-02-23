@@ -4,8 +4,17 @@
 
 - **Module:** `github.com/zambone/pfm-go` | **Repo:** `github.com/fzambone/pfm-go`
 - **Go:** 1.25 | **PostgreSQL:** 18 | **Alpine:** 3.23
-- **Commits:** Conventional Commits — `type(scope): description`, closes #N
+- **Commits:** Conventional Commits — three-part format:
+  ```
+  type(scope): imperative description
+
+  - Bullet per meaningful change (what and why, not how)
+
+  closes #N
+  ```
   Prefixes: `feat`, `fix`, `refactor`, `test`, `chore`, `docs`. Scope = domain or platform concern.
+  Subject: lowercase, no period, imperative mood (`add`, `fix`, `wire`, not `added`, `fixes`).
+  Footer `closes #N` on its own line after a blank line.
 - **Git:** Trunk-based, squash-merge, short-lived branches: `feat/<scope>-<description>`
 - **CI Gate:** `go test ./... -race -count=1` + `golangci-lint run` + `go build`. All must pass.
 - **Tags:** `v0.1.0` (M1), `v0.2.0` (M2), etc. See `MILESTONES.md` for issue breakdown.
