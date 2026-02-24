@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(podman network:*)",
+      "Bash(/opt/podman/bin/podman network:*)"
+    ]
+  }
+}

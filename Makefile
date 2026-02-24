@@ -40,9 +40,9 @@ lint: ## Run golangci-lint
 	golangci-lint run ./...
 
 build: ## Build the application binary
-	go build -ldflags="-X main.Version=$$(git describe --tags --always --dirty) -X main.GitCommit=$$(git rev-parse --short HEAD) -X main.BuildTime=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o pfm ./cmd/pfm/
+	go build -ldflags="-X main.Version=$$(git describe --tags --always --dirty) -X main.GitCommit=$$(git rev-parse --short HEAD) -X main.BuildTime=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o bin/pfm ./cmd/pfm/
 
 ci: lint test-integration build ## Run full CI gate (lint + test + build)
 
 test-integration: ## Run full integration tests suite with race detector (requires Docker)
-	go test -tags integration -race -count=1 -v ./...
+	TESTCONTAINERS_RYUK_DISABLED=true go test -tags integration -race -count=1 -v ./...
