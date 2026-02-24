@@ -17,6 +17,3 @@ Thumbs.db
 
 # Go
 vendor/
-
-# Code Assistant
-.claude/
