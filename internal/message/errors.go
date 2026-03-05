@@ -65,3 +65,17 @@ const (
 	ErrDBPing        = "database: ping after %d retries: %w"
 	ErrDBContextDone = "database: context cancelled during startup: %w"
 )
+
+// Migration log messages.
+const (
+	MsgMigrationsRunning  = "running database migrations"
+	MsgMigrationApplied   = "migration applied"
+	MsgMigrationsComplete = "database migrations complete"
+)
+
+// Migration errors.
+const (
+	ErrMigrateSubFS    = "migrate: create sub filesystem: %w"
+	ErrMigrateProvider = "migrate: create provider: %w"
+	ErrMigrateUp       = "migrate: apply pending migrations: %w"
+)

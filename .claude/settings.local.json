@@ -1,8 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(podman network:*)",
-      "Bash(/opt/podman/bin/podman network:*)"
+      "Bash(git:*)",
+      "Bash(go:*)",
+      "Bash(make:*)",
+      "Bash(golangci-lint:*)",
+      "Bash(goose:*)",
+      "Bash(sqlc:*)",
+      "Bash(gh:*)",
+      "Bash(podman:*)",
+      "Bash(/opt/podman/bin/podman:*)",
+      "Bash(brew list:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(TESTCONTAINERS_RYUK_DISABLED=true go test:*)"
     ]
   }
 }

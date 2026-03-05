@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/zambone/pfm-go/internal/platform/config"
 	"github.com/zambone/pfm-go/internal/platform/database"
 	"github.com/zambone/pfm-go/internal/platform/observe"
+	pfmdb "github.com/zambone/pfm-go/db"
 )
 
 // Version information injected at build via ldflags.
@@ -68,6 +70,15 @@ func run() error {
 	db, err := database.Open(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
+	}
+
+	migrationsFS, err := fs.Sub(pfmdb.Migrations, "migrations")
+	if err != nil {
+		return fmt.Errorf(message.ErrMigrateSubFS, err)
+	}
+
+	if err := database.Migrate(ctx, db, migrationsFS); err != nil {
+		return fmt.Errorf("run migrations: %w", err)
 	}
 
 	var shuttingDown atomic.Bool

@@ -2,18 +2,26 @@
 
 ## Workflow Rules
 
-- **Guide only, don't execute.** I create files in my IDE. Provide guidance on what to create and what content to add.
-- **One step at a time.** One function, one test, or one constant block per step — never two. Wait for confirmation before continuing. Exception: refactoring an existing implementation as a whole (e.g., renaming a parameter throughout a function, extracting constants across a file) counts as one step.
-- **No cat/touch commands.** Describe the file path and content — I type it myself.
-- **I run commands myself** unless I explicitly say "you can run it" or "do it yourself."
+- **I orchestrate, Claude codes.** I make architectural and product decisions. Claude writes all code, creates all files, and produces all implementation. I do not type code.
+- **One step at a time.** One file or one logical unit per step. Pause at decisions that affect architecture or approach — don't proceed through them silently. Wait for confirmation before the next step.
+- **Claude runs git and make commands autonomously.** Before making any file changes, create the feature branch. Use `make` targets and `git` commands to verify work (test, lint, build, status, diff, log). Commits and pushes require my explicit instruction.
 - **Always pin image versions.** Never use `latest` tag in Docker/container images.
-- **Branch before coding.** Before starting work on any issue, create a feature branch from `main`:
-  `feat/<scope>-<description>` (e.g., `feat/observe-structured-logging`). Run `/project:verify-issue`
-  then `/project:review` against the branch diff before suggesting a commit. One branch = one issue = one squash-merge.
+- **Start every story with `/project:implement`.** This skill handles: issue loading, branch creation, codebase assessment, plan writing, decision surfacing, TDD Red→Green cycles, and all CI gate execution. Do not begin implementation without running it first.
+- **Branch before coding.** Before touching any file, create the feature branch from `main`: `feat/<scope>-<description>-<N>` where `<N>` is the issue number (e.g., `feat/observe-structured-logging-12`). No edits on `main` — ever. Run `make ci`, then `/project:verify-issue`, then `/project:review` against the branch diff before suggesting a commit. All three must PASS. One branch = one issue = one squash-merge.
+- **Ship with `/project:ship`.** After all CI gates pass, use `/project:ship` to run the business-alignment review, commit, push, create the PR, squash-merge, delete the branch, and sync main. Do not do these steps manually.
+- **Fetch GitHub issues via `gh`.** Use `gh issue view <N>` to read issue details and acceptance criteria.
+
+## Decision Points — Always Stop and Ask
+
+Stop and surface a decision when:
+- Two valid architectural approaches exist and the choice has long-term consequences
+- A new dependency is needed that isn't already in `go.mod`
+- A design decision in `CLAUDE.md` is ambiguous for the current context
+- Something in the acceptance criteria is unclear or potentially in conflict
 
 ## Teaching Mandate — Go Mastery
 
-I am transitioning to Go from other languages. When guiding me through writing code,
+I am transitioning to Go from other languages. When writing code,
 **proactively explain Go-specific idioms and patterns** that differ from mainstream languages.
 
 ### Always Explain These When They Appear
@@ -41,6 +49,9 @@ I am transitioning to Go from other languages. When guiding me through writing c
 
 ### How to Explain
 
+- **Comment every line in guided snippets.** Every meaningful line in a code snippet must have
+  an inline comment explaining what it does and why Go works that way. These comments are for
+  learning and do not need to be committed to the repo — I decide what to keep.
 - **Inline with guidance:** When a step uses a Go-specific pattern, add 2-3 sentences on
   WHY it works that way in Go — not just what to type.
 - **Compare to familiar concepts:** "In Java you'd use X, in Go the idiomatic approach is Y
