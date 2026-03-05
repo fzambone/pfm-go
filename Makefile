@@ -1,7 +1,8 @@
-.PHONY: help up down logs ps clean db-shell db-logs otel-logs build-docker test test-integration coverage vuln lint build ci
+.PHONY: help up down logs ps clean db-shell db-logs otel-logs build-docker test test-integration coverage vuln lint build generate ci
 
-# GOBIN resolves to the user's GOPATH bin directory where tools like govulncheck live.
+# GOBIN resolves to the user's GOPATH bin directory where tools like govulncheck and sqlc live.
 # Install govulncheck once with: go install golang.org/x/vuln/cmd/govulncheck@latest
+# Install sqlc once with:        go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 GOBIN ?= $(shell go env GOPATH)/bin
 
 # COVERAGE_THRESHOLD is the minimum acceptable unit test coverage percentage.
@@ -75,6 +76,9 @@ coverage: ## Run unit tests with coverage report and enforce COVERAGE_THRESHOLD 
 	    printf 'FAIL: coverage %s%% is below $(COVERAGE_THRESHOLD)%% threshold\n' "$$TOTAL"; \
 	    exit 1; \
 	  fi
+
+generate: ## Regenerate type-safe Go code from db/queries/ using sqlc (requires queries to exist)
+	$(GOBIN)/sqlc generate
 
 vuln: ## Run govulncheck vulnerability scan
 	$(GOBIN)/govulncheck ./...
