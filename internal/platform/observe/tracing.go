@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/zambone/pfm-go/internal/message"
 	"github.com/zambone/pfm-go/internal/platform/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -24,7 +25,7 @@ func NewTracerProvider(ctx context.Context, cfg *config.Config, serviceName, ser
 		),
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("observe: build resource: %w", err)
+		return nil, nil, fmt.Errorf(message.ErrTracerResource, err)
 	}
 
 	opts := []sdktrace.TracerProviderOption{
@@ -38,7 +39,7 @@ func NewTracerProvider(ctx context.Context, cfg *config.Config, serviceName, ser
 			otlptracegrpc.WithInsecure(),
 		)
 		if err != nil {
-			return nil, nil, fmt.Errorf("observe: create OTLP exporter: %w", err)
+			return nil, nil, fmt.Errorf(message.ErrTracerExporter, err)
 		}
 		opts = append(opts, sdktrace.WithBatcher(exporter))
 	}

@@ -185,7 +185,9 @@ deploy/docker/        -> Dockerfile, docker-compose.yml
 - Every goroutine has lifecycle management (`errgroup`, `WaitGroup`, context). No fire-and-forget.
 - Maps require `sync.RWMutex` for concurrent access. Fakes are thread-safe.
 
-## Logging Conventions
+## Observability
+
+### Logging
 
 - Levels: `DEBUG` (internal state), `INFO` (business events), `WARN` (recoverable), `ERROR` (action required).
 - Always context-aware: `slog.InfoContext(ctx, "message")`. Never create new `slog.Logger` in business logic.
@@ -194,6 +196,33 @@ deploy/docker/        -> Dockerfile, docker-compose.yml
 - **Errors are logged once — at the caller that handles them.** Functions that return an error do not log it. The handler or entrypoint that catches and resolves the error is responsible for logging at ERROR. This prevents double-logging of the same event.
 - **Exception: retry loops.** A function that internally retries logs each failed attempt at WARN (it handles each attempt itself). The final unrecoverable error is returned to the caller, which logs it at ERROR.
 - **INFO for lifecycle events.** Significant state transitions — service ready, connection established, shutdown started — must emit `slog.InfoContext`. These are the breadcrumbs operators use to understand startup and shutdown sequences.
+
+### Tracing (OpenTelemetry)
+
+Tracing lives in `internal/adapter/` and `internal/platform/` only. Domain logic is never traced directly.
+
+**Every adapter method** (postgres repo method, HTTP client call, external service call) must:
+
+```go
+ctx, span := otel.Tracer("package").Start(ctx, "Type.Method")
+defer span.End()
+```
+
+**Every error path** must record the error before returning:
+
+```go
+span.RecordError(err)
+span.SetStatus(codes.Error, err.Error())
+return fmt.Errorf("context: %w", err)
+```
+
+**Rules:**
+- Span names: `"Domain.Method"` — e.g. `"UserRepo.FindByID"`, `"HouseholdLogic.Create"`
+- Span attributes: `snake_case` keys, carry enough context to diagnose without the logs (`"user_id"`, `"household_id"`, `"rows_affected"`)
+- No PII or secrets in span attributes (email, password hash, tokens, card numbers)
+- Health endpoints (`/healthz`, `/health/live`, `/health/ready`) must NOT be traced — noise
+- `context.Context` is always the first argument so spans propagate through the call chain
+- Import: `"go.opentelemetry.io/otel"` and `"go.opentelemetry.io/otel/codes"`
 
 ## Go Traps — Enforce on Every Review
 
