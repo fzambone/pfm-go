@@ -64,6 +64,7 @@ const (
 	ErrDBOpen        = "database: open driver: %w"
 	ErrDBPing        = "database: ping after %d retries: %w"
 	ErrDBContextDone = "database: context cancelled during startup: %w"
+	ErrDBVerifyConn  = "database: verify connection: %w"
 )
 
 // Migration log messages.
@@ -78,4 +79,19 @@ const (
 	ErrMigrateSubFS    = "migrate: create sub filesystem: %w"
 	ErrMigrateProvider = "migrate: create provider: %w"
 	ErrMigrateUp       = "migrate: apply pending migrations: %w"
+)
+
+// Observe errors.
+const (
+	ErrTracerResource = "observe: build resource: %w"
+	ErrTracerExporter = "observe: create OTLP exporter: %w"
+)
+
+// Startup errors (used by cmd/pfm/main.go composition root).
+const (
+	ErrRunLoadConfig = "load config: %w"
+	ErrRunLogLevel   = "parse log level %q: %w"
+	ErrRunTracerInit = "init tracer: %w"
+	ErrRunOpenDB     = "open database: %w"
+	ErrRunMigrate    = "run migrations: %w"
 )

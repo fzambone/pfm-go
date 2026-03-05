@@ -40,7 +40,7 @@ Review the actual code — read every changed file, check imports, verify tests 
 - [ ] Log messages: sentence case, no period
 - [ ] slog attribute keys: `snake_case`
 
-## Logging
+## Observability — Logging
 - [ ] WARN logged for every recoverable failure: retries, fallbacks, degraded states — silence implies success
 - [ ] ERROR logged at the handler/entrypoint that catches and resolves the error, not in functions that return it
 - [ ] No double-logging: functions that return an error do not also log it
@@ -50,6 +50,23 @@ Review the actual code — read every changed file, check imports, verify tests 
 - [ ] Context-aware calls only: `slog.XxxContext(ctx, ...)` — never `slog.Xxx(...)` in production code
 - [ ] Attribute keys are `snake_case`
 - [ ] Errors included as structured attribute `"error", err` — never interpolated into the message string
+- [ ] No PII or secrets in log attributes (email, password hash, tokens, card numbers)
+
+## Observability — Tracing
+- [ ] Every adapter method (postgres repo, HTTP client, external service call) opens a span:
+      `ctx, span := otel.Tracer("package").Start(ctx, "Type.Method")`
+- [ ] Every span is closed: `defer span.End()` immediately after `Start`
+- [ ] Every error path records the error on the span before returning:
+      `span.RecordError(err)` + `span.SetStatus(codes.Error, err.Error())`
+- [ ] Happy paths set status OK: `span.SetStatus(codes.Ok, "")` (not strictly required by OTel spec but signals intent)
+- [ ] Span names follow `"Domain.Method"` convention — e.g. `"UserRepo.FindByID"`, `"HouseholdLogic.Create"`
+- [ ] Span attributes use `snake_case` keys and carry enough context to diagnose without the logs:
+      e.g. `"user_id"`, `"household_id"`, `"query_rows_affected"`
+- [ ] No PII or secrets in span attributes (same rule as logging)
+- [ ] Health check endpoints (`/healthz`, `/health/live`, `/health/ready`) are NOT traced —
+      they would pollute trace data with noise
+- [ ] `context.Context` is the first argument of every traced function so the span propagates
+- [ ] Domain logic does NOT create spans — tracing is adapter/platform concern only
 
 ## Testing
 - [ ] Table-driven format for 3+ cases testing same behavior
@@ -99,3 +116,18 @@ Review the actual code — read every changed file, check imports, verify tests 
 **Report format:** List each category as PASS or FAIL.
 For failures, state the specific violation and the file:line where it occurs.
 Do NOT suggest committing until every category passes.
+
+Categories:
+1. Error Handling
+2. Interface Design
+3. Concurrency
+4. Naming and Style
+5. Observability — Logging
+6. Observability — Tracing
+7. Testing
+8. Architecture
+9. Go-Specific Traps
+10. SQL & Database (when applicable)
+
+**Tracing scope:** Apply the Tracing category only to files in `internal/adapter/` and `internal/platform/`.
+Domain packages (`internal/domain/`) must NOT have tracing — flag it as a violation if they do.

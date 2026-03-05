@@ -64,7 +64,7 @@ func Open(ctx context.Context, cfg *config.Config) (*sql.DB, error) {
 	db.SetConnMaxIdleTime(time.Duration(cfg.DBConnMaxIdleTimeSec) * time.Second)
 
 	if err := pingWithRetry(ctx, db, cfg); err != nil {
-		return nil, fmt.Errorf("verify connection: %w", err)
+		return nil, fmt.Errorf(message.ErrDBVerifyConn, err)
 	}
 
 	slog.InfoContext(ctx, message.MsgDBReady)

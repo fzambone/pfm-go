@@ -51,7 +51,7 @@ func TestNewLogger_InfoLog_IncludesRequestContextFields(t *testing.T) {
 	assert.Equal(t, "trace-123", entry["trace_id"])
 	assert.Equal(t, userId.String(), entry["user_id"])
 	assert.Equal(t, householdId.String(), entry["household_id"])
-	assert.Contains(t, entry, "span_id")
+	assert.NotContains(t, entry, "span_id") // ctxutil fallback has no OTel span — span_id must be absent, not empty
 }
 
 func TestNewLogger_WhenLevelInfo_DebugMessagesSuppressed(t *testing.T) {

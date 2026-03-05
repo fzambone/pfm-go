@@ -55,7 +55,6 @@ func addContextAttrs(ctx context.Context, record slog.Record) slog.Record {
 		record.AddAttrs(slog.String("span_id", spanCtx.SpanID().String()))
 	} else if traceId, ok := ctxutil.TraceID(ctx); ok && traceId != "" {
 		record.AddAttrs(slog.String("trace_id", traceId))
-		record.AddAttrs(slog.String("span_id", ""))
 	}
 
 	if userId, ok := ctxutil.UserID(ctx); ok {

@@ -41,12 +41,12 @@ func run() error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("load config: %w", err)
+		return fmt.Errorf(message.ErrRunLoadConfig, err)
 	}
 
 	var logLevel slog.Level
 	if err := logLevel.UnmarshalText([]byte(cfg.LogLevel)); err != nil {
-		return fmt.Errorf("parse log level %q: %w", cfg.LogLevel, err)
+		return fmt.Errorf(message.ErrRunLogLevel, cfg.LogLevel, err)
 	}
 	logger := observe.NewLogger(logLevel, nil)
 
@@ -62,14 +62,14 @@ func run() error {
 
 	tp, tracerShutdown, err := observe.NewTracerProvider(ctx, cfg, "pfm-go", Version)
 	if err != nil {
-		return fmt.Errorf("init tracer: %w", err)
+		return fmt.Errorf(message.ErrRunTracerInit, err)
 	}
 	_ = tp
 	slog.InfoContext(ctx, message.MsgTracerReady)
 
 	db, err := database.Open(ctx, cfg)
 	if err != nil {
-		return fmt.Errorf("open database: %w", err)
+		return fmt.Errorf(message.ErrRunOpenDB, err)
 	}
 
 	migrationsFS, err := fs.Sub(pfmdb.Migrations, "migrations")
@@ -78,7 +78,7 @@ func run() error {
 	}
 
 	if err := database.Migrate(ctx, db, migrationsFS); err != nil {
-		return fmt.Errorf("run migrations: %w", err)
+		return fmt.Errorf(message.ErrRunMigrate, err)
 	}
 
 	var shuttingDown atomic.Bool
