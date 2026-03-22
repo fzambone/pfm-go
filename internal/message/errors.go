@@ -87,6 +87,23 @@ const (
 	ErrTracerExporter = "observe: create OTLP exporter: %w"
 )
 
+// Pool errors.
+const (
+	ErrDBParsePoolConfig = "database: parse pool config: %w"
+	ErrDBNewPool         = "database: create pool: %w"
+)
+
+// Transactor log messages.
+const (
+	MsgTransactorRollbackFailed = "transaction rollback failed after fn error"
+)
+
+// Transactor errors.
+const (
+	ErrTransactorBegin  = "transactor: begin transaction: %w"
+	ErrTransactorCommit = "transactor: commit transaction: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"

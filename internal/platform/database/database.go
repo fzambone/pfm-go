@@ -8,6 +8,7 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/zambone/pfm-go/internal/message"
 	"github.com/zambone/pfm-go/internal/platform/config"
@@ -70,4 +71,36 @@ func Open(ctx context.Context, cfg *config.Config) (*sql.DB, error) {
 	slog.InfoContext(ctx, message.MsgDBReady)
 
 	return db, nil
+}
+
+// NewPool creates a pgx-native connection pool for application queries.
+// Unlike Open, which uses the database/sql adapter for goose migrations,
+// NewPool returns a *pgxpool.Pool suitable for use with pgx-native queries
+// and the PostgresTransactor.
+func NewPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
+	slog.InfoContext(ctx, message.MsgDBConnecting)
+
+	poolCfg, err := pgxpool.ParseConfig(buildDSN(cfg))
+	if err != nil {
+		return nil, fmt.Errorf(message.ErrDBParsePoolConfig, err)
+	}
+
+	poolCfg.MaxConns = int32(cfg.DBMaxOpenConns)
+	poolCfg.MinConns = int32(cfg.DBMaxIdleConns)
+	poolCfg.MaxConnLifetime = time.Duration(cfg.DBConnMaxLifetimeSec) * time.Second
+	poolCfg.MaxConnIdleTime = time.Duration(cfg.DBConnMaxIdleTimeSec) * time.Second
+
+	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
+	if err != nil {
+		return nil, fmt.Errorf(message.ErrDBNewPool, err)
+	}
+
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf(message.ErrDBVerifyConn, err)
+	}
+
+	slog.InfoContext(ctx, message.MsgDBReady)
+
+	return pool, nil
 }
