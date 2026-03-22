@@ -123,6 +123,13 @@ const (
 	ErrTokenServiceKeyLength = "token service: key must be 32 bytes, got %d"
 )
 
+// Authentication middleware messages.
+const (
+	MsgAuthnMissingToken = "missing or malformed authorization header"
+	MsgAuthnExpiredToken = "token expired"
+	MsgAuthnInvalidToken = "invalid token"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
