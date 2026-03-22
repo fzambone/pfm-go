@@ -111,6 +111,14 @@ func TestFakeTokenService_Issue_SameUserProducesUniqueTokens(t *testing.T) {
 	assert.NotEqual(t, t1, t2, "each Issue call must produce a unique token")
 }
 
+// TestNewFakeTokenService_PanicsOnNilClock verifies that constructing a
+// FakeTokenService with a nil clock panics at startup.
+func TestNewFakeTokenService_PanicsOnNilClock(t *testing.T) {
+	assert.Panics(t, func() {
+		authadapter.NewFakeTokenService(nil)
+	})
+}
+
 // TestFakeTokenService_Validate_TokenNotRenewable verifies the edge case:
 // validating after expiry always returns ErrTokenExpired even if re-issued.
 func TestFakeTokenService_Validate_TokenNotRenewable(t *testing.T) {
