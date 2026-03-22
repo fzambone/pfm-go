@@ -104,6 +104,12 @@ const (
 	ErrTransactorCommit = "transactor: commit transaction: %w"
 )
 
+// Password hasher errors.
+const (
+	ErrHasherHash   = "hasher: hash password: %w"
+	ErrHasherVerify = "hasher: verify password: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
