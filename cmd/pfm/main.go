@@ -14,7 +14,11 @@ import (
 	"time"
 
 	pfmhttp "github.com/zambone/pfm-go/internal/adapter/http"
+	authadapter "github.com/zambone/pfm-go/internal/adapter/auth"
+	pgadapter "github.com/zambone/pfm-go/internal/adapter/postgres"
+	domainuser "github.com/zambone/pfm-go/internal/domain/user"
 	"github.com/zambone/pfm-go/internal/message"
+	"github.com/zambone/pfm-go/internal/platform/clock"
 	"github.com/zambone/pfm-go/internal/platform/config"
 	"github.com/zambone/pfm-go/internal/platform/database"
 	"github.com/zambone/pfm-go/internal/platform/observe"
@@ -81,12 +85,34 @@ func run() error {
 		return fmt.Errorf(message.ErrRunMigrate, err)
 	}
 
+	pool, err := database.NewPool(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf(message.ErrDBNewPool, err)
+	}
+
+	// Auth wiring.
+	userRepo := pgadapter.NewUserRepo(pool)
+	hasher := authadapter.NewArgon2idHasher(authadapter.DefaultArgon2idParams())
+	realClock := clock.NewRealClock()
+	tokenSvc, err := authadapter.NewPasetoTokenService(cfg.TokenSecretKey, realClock)
+	if err != nil {
+		return fmt.Errorf(message.ErrRunTokenKey, err)
+	}
+	loginLogic := domainuser.NewLoginLogic(
+		userRepo,
+		hasher,
+		tokenSvc,
+		realClock,
+		time.Duration(cfg.TokenExpirationSec)*time.Second,
+	)
+
 	var shuttingDown atomic.Bool
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /healthz", pfmhttp.HealthHandler(Version))
 	mux.Handle("GET /health/live", pfmhttp.LiveHandler())
 	mux.Handle("GET /health/ready", pfmhttp.ReadyHandler(&shuttingDown))
+	mux.Handle("POST /auth/login", pfmhttp.LoginHandler(loginLogic))
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.HTTPPort),
