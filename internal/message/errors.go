@@ -130,6 +130,25 @@ const (
 	MsgAuthnInvalidToken = "invalid token"
 )
 
+// Login errors and messages.
+var (
+	ErrLoginInvalidCredentials = errors.New("login: invalid credentials")
+)
+
+const (
+	MsgLoginInvalidCredentials = "invalid credentials"
+	MsgLoginBadRequest         = "invalid request body"
+	MsgValidationFailed        = "validation failed"
+	ErrLoginFindUser           = "login: find user: %w"
+	ErrLoginIssueToken         = "login: issue token: %w"
+	ErrLoginVerifyPassword     = "login: verify password: %w"
+)
+
+// User repository errors.
+const (
+	ErrUserNotFound = "user: not found: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
@@ -137,4 +156,5 @@ const (
 	ErrRunTracerInit = "init tracer: %w"
 	ErrRunOpenDB     = "open database: %w"
 	ErrRunMigrate    = "run migrations: %w"
+	ErrRunTokenKey   = "init token service: %w"
 )
