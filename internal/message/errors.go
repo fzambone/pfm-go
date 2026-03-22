@@ -110,6 +110,19 @@ const (
 	ErrHasherVerify = "hasher: verify password: %w"
 )
 
+// Token service errors.
+var (
+	ErrTokenExpired  = errors.New("token: expired")
+	ErrTokenInvalid  = errors.New("token: invalid")
+)
+
+const (
+	ErrTokenServiceIssue    = "token service: issue: %w"
+	ErrTokenServiceValidate = "token service: validate: %w"
+	ErrTokenServiceKeyDecode = "token service: decode key: %w"
+	ErrTokenServiceKeyLength = "token service: key must be 32 bytes, got %d"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"

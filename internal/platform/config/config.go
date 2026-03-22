@@ -50,6 +50,10 @@ type Config struct {
 	RequireOTEL bool
 	// OTELEndpoint is the OpenTelemetry collector endpoint. Env: OTEL_ENDPOINT. Default: none.
 	OTELEndpoint string
+	// TokenSecretKey is the hex-encoded 32-byte symmetric key for PASETO v4 tokens. Env: TOKEN_SECRET_KEY. No default.
+	TokenSecretKey string
+	// TokenExpirationSec is the token lifetime in seconds. Env: TOKEN_EXPIRATION_SEC. Default: 86400 (24 hours).
+	TokenExpirationSec int
 }
 
 // Load reads configuration from environment variables, applying defaults for local development.
@@ -112,6 +116,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf(message.ErrConfigRequired, "OTEL_ENDPOINT")
 	}
 
+	tokenExpirationSec, err := envInt("TOKEN_EXPIRATION_SEC", 86400)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &Config{
 		HTTPPort:               httpPort,
 		DatabaseHost:           envStr("DATABASE_HOST", "localhost"),
@@ -132,6 +141,8 @@ func Load() (*Config, error) {
 		Debug:                  debug,
 		RequireOTEL:            requireOTEL,
 		OTELEndpoint:           otelEndpoint,
+		TokenSecretKey:         os.Getenv("TOKEN_SECRET_KEY"),
+		TokenExpirationSec:     tokenExpirationSec,
 	}
 
 	return cfg, nil
@@ -142,11 +153,13 @@ func (c *Config) String() string {
 		"HTTPPort=%d DatabaseHost=%s DatabasePort=%d DatabaseUser=%s DatabasePassword=**** "+
 			"DatabaseName=%s DatabaseSSLMode=%s DBMaxOpenConns=%d DBMaxIdleConns=%d DBConnMaxLifetimeSec=%d "+
 			"DBConnMaxIdleTimeSec=%d DBConnectTimeoutSec=%d DBStartupRetries=%d DBStartupRetryDelaySec=%d "+
-			"ShutdownTimeoutSec=%d LogLevel=%s Debug=%t RequireOTEL=%t OTELEndpoint=%s",
+			"ShutdownTimeoutSec=%d LogLevel=%s Debug=%t RequireOTEL=%t OTELEndpoint=%s "+
+			"TokenSecretKey=**** TokenExpirationSec=%d",
 		c.HTTPPort, c.DatabaseHost, c.DatabasePort, c.DatabaseUser,
 		c.DatabaseName, c.DatabaseSSLMode, c.DBMaxOpenConns, c.DBMaxIdleConns, c.DBConnMaxLifetimeSec,
 		c.DBConnMaxIdleTimeSec, c.DBConnectTimeoutSec, c.DBStartupRetries, c.DBStartupRetryDelaySec,
 		c.ShutdownTimeoutSec, c.LogLevel, c.Debug, c.RequireOTEL, c.OTELEndpoint,
+		c.TokenExpirationSec,
 	)
 }
 
