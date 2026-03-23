@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/zambone/pfm-go/internal/platform/ctxutil"
+	"github.com/zambone/pfm-go/internal/types"
 )
 
 func TestUserID_RoundTrip(t *testing.T) {
@@ -29,6 +30,7 @@ func TestMissingFromContext_ReturnsFalse(t *testing.T) {
 		{"user ID", func(ctx context.Context) bool { _, ok := ctxutil.UserID(ctx); return ok }},
 		{"household ID", func(ctx context.Context) bool { _, ok := ctxutil.HouseholdID(ctx); return ok }},
 		{"trace ID", func(ctx context.Context) bool { _, ok := ctxutil.TraceID(ctx); return ok }},
+		{"role", func(ctx context.Context) bool { _, ok := ctxutil.Role(ctx); return ok }},
 	}
 
 	for _, tt := range tests {
@@ -57,15 +59,26 @@ func TestTraceID_RoundTrip(t *testing.T) {
 	assert.Equal(t, "abc123", got)
 }
 
+func TestRole_RoundTrip(t *testing.T) {
+	ctx := ctxutil.WithRole(context.Background(), types.RoleAdmin)
+
+	got, ok := ctxutil.Role(ctx)
+
+	assert.True(t, ok)
+	assert.Equal(t, types.RoleAdmin, got)
+}
+
 func TestMultipleValues_Coexist(t *testing.T) {
 	userID := uuid.New()
 	householdID := uuid.New()
 	traceID := "trace-123"
+	role := types.RoleMember
 
 	ctx := context.Background()
 	ctx = ctxutil.WithUserID(ctx, userID)
 	ctx = ctxutil.WithHouseholdID(ctx, householdID)
 	ctx = ctxutil.WithTraceID(ctx, traceID)
+	ctx = ctxutil.WithRole(ctx, role)
 
 	gotUser, ok := ctxutil.UserID(ctx)
 	assert.True(t, ok)
@@ -78,17 +91,23 @@ func TestMultipleValues_Coexist(t *testing.T) {
 	gotTrace, ok := ctxutil.TraceID(ctx)
 	assert.True(t, ok)
 	assert.Equal(t, traceID, gotTrace)
+
+	gotRole, ok := ctxutil.Role(ctx)
+	assert.True(t, ok)
+	assert.Equal(t, role, gotRole)
 }
 
 func TestContextValues_AccessibleAcrossGoroutines(t *testing.T) {
 	userID := uuid.New()
 	householdID := uuid.New()
 	traceID := "trace-goroutine"
+	role := types.RoleAdmin
 
 	ctx := context.Background()
 	ctx = ctxutil.WithUserID(ctx, userID)
 	ctx = ctxutil.WithHouseholdID(ctx, householdID)
 	ctx = ctxutil.WithTraceID(ctx, traceID)
+	ctx = ctxutil.WithRole(ctx, role)
 
 	done := make(chan struct{})
 	go func() {
@@ -105,6 +124,10 @@ func TestContextValues_AccessibleAcrossGoroutines(t *testing.T) {
 		gotTrace, ok := ctxutil.TraceID(ctx)
 		assert.True(t, ok)
 		assert.Equal(t, traceID, gotTrace)
+
+		gotRole, ok := ctxutil.Role(ctx)
+		assert.True(t, ok)
+		assert.Equal(t, role, gotRole)
 	}()
 
 	<-done

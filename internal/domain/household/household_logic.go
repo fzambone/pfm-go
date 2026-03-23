@@ -10,6 +10,7 @@ import (
 
 	"github.com/zambone/pfm-go/internal/message"
 	"github.com/zambone/pfm-go/internal/platform/validate"
+	"github.com/zambone/pfm-go/internal/types"
 )
 
 // transactor abstracts atomic multi-table operations.
@@ -96,7 +97,7 @@ func (l *HouseholdLogic) AddMember(ctx context.Context, householdID uuid.UUID, i
 		}
 		return Membership{}, fmt.Errorf(message.ErrHouseholdLogicAddMember, err)
 	}
-	if callerMembership.Role != RoleAdmin {
+	if callerMembership.Role != types.RoleAdmin {
 		return Membership{}, fmt.Errorf(message.ErrHouseholdLogicAddMember, message.ErrHouseholdNotAdmin)
 	}
 
@@ -117,7 +118,7 @@ func (l *HouseholdLogic) RemoveMember(ctx context.Context, householdID uuid.UUID
 		}
 		return fmt.Errorf(message.ErrHouseholdLogicRemoveMember, err)
 	}
-	if callerMembership.Role != RoleAdmin {
+	if callerMembership.Role != types.RoleAdmin {
 		return fmt.Errorf(message.ErrHouseholdLogicRemoveMember, message.ErrHouseholdNotAdmin)
 	}
 
@@ -128,7 +129,7 @@ func (l *HouseholdLogic) RemoveMember(ctx context.Context, householdID uuid.UUID
 	}
 	adminCount := 0
 	for _, m := range members {
-		if m.Role == RoleAdmin {
+		if m.Role == types.RoleAdmin {
 			adminCount++
 		}
 	}
@@ -141,7 +142,7 @@ func (l *HouseholdLogic) RemoveMember(ctx context.Context, householdID uuid.UUID
 		}
 		return fmt.Errorf(message.ErrHouseholdLogicRemoveMember, err)
 	}
-	if targetMembership.Role == RoleAdmin && adminCount <= 1 {
+	if targetMembership.Role == types.RoleAdmin && adminCount <= 1 {
 		return fmt.Errorf(message.ErrHouseholdLogicRemoveMember, message.ErrHouseholdLastAdmin)
 	}
 

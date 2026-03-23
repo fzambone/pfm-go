@@ -16,6 +16,7 @@ import (
 	"github.com/zambone/pfm-go/internal/domain/household"
 	"github.com/zambone/pfm-go/internal/message"
 	"github.com/zambone/pfm-go/internal/platform/database"
+	"github.com/zambone/pfm-go/internal/types"
 )
 
 // insertTestUser inserts a minimal user row via raw SQL and returns the server-assigned UUID.
@@ -46,14 +47,14 @@ func TestHouseholdRepo_Create_StoresHouseholdAndMembership(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEqual(t, uuid.Nil, h.ID)
 	assert.Equal(t, "Home", h.Name)
-	assert.Equal(t, household.StatusActive, h.Status)
+	assert.Equal(t, types.StatusActive, h.Status)
 	assert.Equal(t, 1, h.Version)
 	assert.False(t, h.CreatedAt.IsZero())
 
 	members, err := repo.ListMembers(ctx, h.ID)
 	require.NoError(t, err)
 	assert.Len(t, members, 1)
-	assert.Equal(t, household.RoleAdmin, members[0].Role)
+	assert.Equal(t, types.RoleAdmin, members[0].Role)
 }
 
 // ---------------------------------------------------------------------------
@@ -158,7 +159,7 @@ func TestHouseholdRepo_FindMembership_ReturnsAdminMembership(t *testing.T) {
 	m, err := repo.FindMembership(ctx, h.ID, callerID)
 
 	require.NoError(t, err)
-	assert.Equal(t, household.RoleAdmin, m.Role)
+	assert.Equal(t, types.RoleAdmin, m.Role)
 	assert.Equal(t, h.ID, m.HouseholdID)
 }
 
@@ -194,7 +195,7 @@ func TestHouseholdRepo_ListMembers_ReturnsAllActive(t *testing.T) {
 	secondUser := insertTestUser(t, pool)
 	_, err = repo.AddMember(ctx, h.ID, household.AddMemberInput{
 		UserID: secondUser,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 
@@ -220,13 +221,13 @@ func TestHouseholdRepo_AddMember_StoresAndReturns(t *testing.T) {
 	newUser := insertTestUser(t, pool)
 	m, err := repo.AddMember(ctx, h.ID, household.AddMemberInput{
 		UserID: newUser,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 
 	require.NoError(t, err)
 	assert.Equal(t, h.ID, m.HouseholdID)
 	assert.Equal(t, newUser, m.UserID)
-	assert.Equal(t, household.RoleMember, m.Role)
+	assert.Equal(t, types.RoleMember, m.Role)
 }
 
 func TestHouseholdRepo_AddMember_DuplicateReturnsMemberExists(t *testing.T) {
@@ -241,13 +242,13 @@ func TestHouseholdRepo_AddMember_DuplicateReturnsMemberExists(t *testing.T) {
 	newUser := insertTestUser(t, pool)
 	_, err = repo.AddMember(ctx, h.ID, household.AddMemberInput{
 		UserID: newUser,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 
 	_, err = repo.AddMember(ctx, h.ID, household.AddMemberInput{
 		UserID: newUser,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 
 	require.Error(t, err)
@@ -270,7 +271,7 @@ func TestHouseholdRepo_RemoveMember_SoftDeletes(t *testing.T) {
 	newUser := insertTestUser(t, pool)
 	_, err = repo.AddMember(ctx, h.ID, household.AddMemberInput{
 		UserID: newUser,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 
@@ -398,7 +399,7 @@ func TestHouseholdRepo_Txn_CreateCommits(t *testing.T) {
 	members, err := repo.ListMembers(ctx, householdID)
 	require.NoError(t, err)
 	assert.Len(t, members, 1)
-	assert.Equal(t, household.RoleAdmin, members[0].Role)
+	assert.Equal(t, types.RoleAdmin, members[0].Role)
 }
 
 // TestHouseholdRepo_Txn_CreateRollsBack verifies that when a transaction
@@ -448,7 +449,7 @@ func TestHouseholdRepo_Workflow_DeactivateHidesFromAllMembers(t *testing.T) {
 
 	_, err = repo.AddMember(ctx, h.ID, household.AddMemberInput{
 		UserID: member,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, admin)
 	require.NoError(t, err)
 
@@ -490,7 +491,7 @@ func TestHouseholdRepo_Workflow_AddRemoveMember(t *testing.T) {
 
 	_, err = repo.AddMember(ctx, h.ID, household.AddMemberInput{
 		UserID: member,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, admin)
 	require.NoError(t, err)
 

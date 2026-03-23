@@ -12,6 +12,7 @@ import (
 	"github.com/zambone/pfm-go/internal/adapter/postgres"
 	"github.com/zambone/pfm-go/internal/domain/household"
 	"github.com/zambone/pfm-go/internal/message"
+	"github.com/zambone/pfm-go/internal/types"
 )
 
 // ---------------------------------------------------------------------------
@@ -27,7 +28,7 @@ func TestFakeHouseholdRepository_Create_StoresHouseholdAndMembership(t *testing.
 	require.NoError(t, err)
 	assert.NotEqual(t, uuid.Nil, h.ID)
 	assert.Equal(t, "Home", h.Name)
-	assert.Equal(t, household.StatusActive, h.Status)
+	assert.Equal(t, types.StatusActive, h.Status)
 	assert.Equal(t, 1, h.Version)
 
 	// The caller should be findable as a member via ListForUser.
@@ -98,13 +99,13 @@ func TestFakeHouseholdRepository_AddMember_StoresAndReflectsInList(t *testing.T)
 
 	m, err := repo.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: newMember,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 
 	require.NoError(t, err)
 	assert.Equal(t, h.ID, m.HouseholdID)
 	assert.Equal(t, newMember, m.UserID)
-	assert.Equal(t, household.RoleMember, m.Role)
+	assert.Equal(t, types.RoleMember, m.Role)
 
 	list, err := repo.ListForUser(context.Background(), newMember)
 	require.NoError(t, err)
@@ -121,13 +122,13 @@ func TestFakeHouseholdRepository_AddMember_DuplicateReturnsMemberExists(t *testi
 
 	_, err = repo.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: newMember,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 
 	_, err = repo.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: newMember,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 
 	require.Error(t, err)
@@ -147,7 +148,7 @@ func TestFakeHouseholdRepository_RemoveMember_SoftDeletes(t *testing.T) {
 	require.NoError(t, err)
 	_, err = repo.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: member,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 

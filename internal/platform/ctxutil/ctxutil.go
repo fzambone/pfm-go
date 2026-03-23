@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+
+	"github.com/zambone/pfm-go/internal/types"
 )
 
 type contextKey int
@@ -12,6 +14,7 @@ const (
 	userIdKey contextKey = iota
 	householdIdKey
 	traceIdKey
+	roleKey
 )
 
 // WithUserID returns a new context with a given user id.
@@ -45,4 +48,15 @@ func WithTraceID(ctx context.Context, id string) context.Context {
 func TraceID(ctx context.Context) (string, bool) {
 	id, ok := ctx.Value(traceIdKey).(string)
 	return id, ok
+}
+
+// WithRole returns a new context with the given household membership role.
+func WithRole(ctx context.Context, role types.Role) context.Context {
+	return context.WithValue(ctx, roleKey, role)
+}
+
+// Role extracts the household membership role from the context.
+func Role(ctx context.Context) (types.Role, bool) {
+	role, ok := ctx.Value(roleKey).(types.Role)
+	return role, ok
 }

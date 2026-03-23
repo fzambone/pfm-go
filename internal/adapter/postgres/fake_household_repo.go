@@ -10,6 +10,7 @@ import (
 
 	"github.com/zambone/pfm-go/internal/domain/household"
 	"github.com/zambone/pfm-go/internal/message"
+	"github.com/zambone/pfm-go/internal/types"
 )
 
 // memberKey uniquely identifies a membership by household and user.
@@ -65,7 +66,7 @@ func (f *FakeHouseholdRepository) Create(_ context.Context, input household.Crea
 	h := household.Household{
 		ID:        uuid.New(),
 		Name:      input.Name,
-		Status:    household.StatusActive,
+		Status:    types.StatusActive,
 		Version:   1,
 		CreatedBy: callerID,
 		UpdatedBy: callerID,
@@ -76,7 +77,7 @@ func (f *FakeHouseholdRepository) Create(_ context.Context, input household.Crea
 	f.members[key] = household.Membership{
 		HouseholdID: h.ID,
 		UserID:      callerID,
-		Role:        household.RoleAdmin,
+		Role:        types.RoleAdmin,
 		InvitedBy:   uuid.Nil,
 	}
 
