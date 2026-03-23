@@ -222,6 +222,29 @@ const (
 	ErrHouseholdLogicDeactivate   = "household logic: deactivate: %w"
 )
 
+// Account repository errors.
+var (
+	// ErrAccountNotFound is returned when an account lookup by ID finds no active record.
+	ErrAccountNotFound = errors.New("account: not found")
+	// ErrAccountVersionConflict is returned when an optimistic-lock update finds a stale version.
+	ErrAccountVersionConflict = errors.New("account: version conflict")
+	// ErrAccountNameTaken is returned when creating or renaming an account to a name already
+	// used by another active account in the same household.
+	ErrAccountNameTaken = errors.New("account: name already taken in household")
+	// ErrAccountBalanceNotZero is returned when deactivating an account that still has a balance.
+	ErrAccountBalanceNotZero = errors.New("account: balance must be zero to deactivate")
+)
+
+// Account repository format strings (adapter layer).
+const (
+	ErrAccountCreate         = "account: create: %w"
+	ErrAccountFindByID       = "account: find by id: %w"
+	ErrAccountListForHouse   = "account: list for household: %w"
+	ErrAccountUpdateName     = "account: update name: %w"
+	ErrAccountUpdateBalance  = "account: update balance: %w"
+	ErrAccountDeactivate     = "account: deactivate: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
