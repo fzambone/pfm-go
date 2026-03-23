@@ -130,6 +130,15 @@ const (
 	MsgAuthnInvalidToken = "invalid token"
 )
 
+// Authorization middleware messages.
+const (
+	MsgAuthzUnauthenticated = "authentication required"
+	MsgAuthzForbidden       = "you are not a member of this household"
+	MsgAuthzNotFound        = "household not found"
+	MsgAuthzBadRequest      = "invalid household ID in URL"
+	MsgAuthzAdminRequired   = "admin role required"
+)
+
 // Login errors and messages.
 var (
 	ErrLoginInvalidCredentials = errors.New("login: invalid credentials")
