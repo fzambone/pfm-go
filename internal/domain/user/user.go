@@ -1,4 +1,4 @@
-// Package user contains the business logic for user authentication.
+// Package user contains the business logic for user authentication and lifecycle management.
 package user
 
 import (
@@ -12,7 +12,31 @@ import (
 type User struct {
 	ID           uuid.UUID
 	Email        string
+	DisplayName  string
 	PasswordHash string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	CreatedBy    uuid.UUID
+	UpdatedBy    uuid.UUID
+}
+
+// RegisterInput carries the caller-supplied data for creating a new user.
+// Validation is performed by the domain logic layer before this reaches the repository.
+type RegisterInput struct {
+	Email       string
+	DisplayName string
+	Password    string
+}
+
+// UpdateProfileInput carries the caller-supplied data for updating a user's profile.
+type UpdateProfileInput struct {
+	DisplayName string
+}
+
+// ChangePasswordInput carries the old and new passwords for a password change operation.
+type ChangePasswordInput struct {
+	OldPassword string
+	NewPassword string
 }
 
 // LoginResult is returned on successful authentication.
