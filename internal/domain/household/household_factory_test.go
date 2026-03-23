@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/zambone/pfm-go/internal/domain/household"
+	"github.com/zambone/pfm-go/internal/types"
 )
 
 var (
@@ -25,7 +26,7 @@ func householdFactory(overrides ...func(*household.Household)) household.Househo
 	h := household.Household{
 		ID:        testHouseholdID,
 		Name:      "Test Household",
-		Status:    household.StatusActive,
+		Status:    types.StatusActive,
 		Version:   1,
 		CreatedAt: fixedTime,
 		UpdatedAt: fixedTime,
@@ -43,7 +44,7 @@ func membershipFactory(overrides ...func(*household.Membership)) household.Membe
 	m := household.Membership{
 		HouseholdID: testHouseholdID,
 		UserID:      testOwnerID,
-		Role:        household.RoleAdmin,
+		Role:        types.RoleAdmin,
 		InvitedBy:   uuid.Nil,
 		JoinedAt:    fixedTime,
 	}
@@ -79,7 +80,7 @@ func updateNameInputFactory(overrides ...func(*household.UpdateNameInput)) house
 func addMemberInputFactory(overrides ...func(*household.AddMemberInput)) household.AddMemberInput {
 	in := household.AddMemberInput{
 		UserID: testMemberID,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}
 	for _, o := range overrides {
 		o(&in)
@@ -95,7 +96,7 @@ func TestFactories_ProduceValidDefaults(t *testing.T) {
 
 		assert.NotEqual(t, uuid.Nil, h.ID)
 		assert.NotEmpty(t, h.Name)
-		assert.Equal(t, household.StatusActive, h.Status)
+		assert.Equal(t, types.StatusActive, h.Status)
 		assert.Equal(t, 1, h.Version)
 		assert.False(t, h.CreatedAt.IsZero())
 		assert.False(t, h.UpdatedAt.IsZero())
@@ -108,7 +109,7 @@ func TestFactories_ProduceValidDefaults(t *testing.T) {
 
 		assert.NotEqual(t, uuid.Nil, m.HouseholdID)
 		assert.NotEqual(t, uuid.Nil, m.UserID)
-		assert.Equal(t, household.RoleAdmin, m.Role)
+		assert.Equal(t, types.RoleAdmin, m.Role)
 		assert.False(t, m.JoinedAt.IsZero())
 	})
 
@@ -125,9 +126,9 @@ func TestFactories_ProduceValidDefaults(t *testing.T) {
 	})
 
 	t.Run("membershipFactory override applies", func(t *testing.T) {
-		m := membershipFactory(func(m *household.Membership) { m.Role = household.RoleMember })
+		m := membershipFactory(func(m *household.Membership) { m.Role = types.RoleMember })
 
-		assert.Equal(t, household.RoleMember, m.Role)
+		assert.Equal(t, types.RoleMember, m.Role)
 	})
 
 	t.Run("updateNameInputFactory has non-empty name", func(t *testing.T) {
@@ -140,7 +141,7 @@ func TestFactories_ProduceValidDefaults(t *testing.T) {
 		in := addMemberInputFactory()
 
 		assert.NotEqual(t, uuid.Nil, in.UserID)
-		assert.Equal(t, household.RoleMember, in.Role)
+		assert.Equal(t, types.RoleMember, in.Role)
 	})
 
 	t.Run("householdFactory fixedTime is 2026-01-01", func(t *testing.T) {

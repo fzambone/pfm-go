@@ -15,6 +15,7 @@ import (
 	"github.com/zambone/pfm-go/internal/domain/household"
 	"github.com/zambone/pfm-go/internal/message"
 	"github.com/zambone/pfm-go/internal/platform/database"
+	"github.com/zambone/pfm-go/internal/types"
 )
 
 // HouseholdRepo implements domain/household.Repository using PostgreSQL via sqlc-generated queries.
@@ -36,7 +37,7 @@ func householdFromRow(id uuid.UUID, name, status string, version int32, createdA
 	return household.Household{
 		ID:        id,
 		Name:      name,
-		Status:    household.Status(status),
+		Status:    types.Status(status),
 		Version:   int(version),
 		CreatedAt: pgTimestamptzToTime(createdAt),
 		UpdatedAt: pgTimestamptzToTime(updatedAt),
@@ -50,7 +51,7 @@ func membershipFromRow(householdID, userID uuid.UUID, role string, invitedBy pgt
 	return household.Membership{
 		HouseholdID: householdID,
 		UserID:      userID,
-		Role:        household.Role(role),
+		Role:        types.Role(role),
 		InvitedBy:   pgUUIDToUUID(invitedBy),
 		JoinedAt:    pgTimestamptzToTime(joinedAt),
 	}
@@ -81,7 +82,7 @@ func (r *HouseholdRepo) Create(ctx context.Context, input household.CreateInput,
 	_, err = q.CreateHouseholdMember(ctx, CreateHouseholdMemberParams{
 		HouseholdID: row.ID,
 		UserID:      callerID,
-		Role:        string(household.RoleAdmin),
+		Role:        string(types.RoleAdmin),
 		InvitedBy:   uuidToPgUUID(uuid.Nil),
 	})
 	if err != nil {

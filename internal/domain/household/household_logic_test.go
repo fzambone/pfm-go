@@ -15,6 +15,7 @@ import (
 	"github.com/zambone/pfm-go/internal/platform/clock"
 	"github.com/zambone/pfm-go/internal/platform/database"
 	"github.com/zambone/pfm-go/internal/platform/validate"
+	"github.com/zambone/pfm-go/internal/types"
 )
 
 // newHouseholdLogic returns a HouseholdLogic with a fresh fake repo, fake transactor,
@@ -40,7 +41,7 @@ func TestHouseholdLogic_Create_HappyPath(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEqual(t, uuid.Nil, h.ID)
 	assert.Equal(t, "Home", h.Name)
-	assert.Equal(t, household.StatusActive, h.Status)
+	assert.Equal(t, types.StatusActive, h.Status)
 	assert.Equal(t, 1, h.Version)
 }
 
@@ -62,7 +63,7 @@ func TestHouseholdLogic_Create_CallerBecomesAdmin(t *testing.T) {
 
 	m, err := repo.FindMembership(context.Background(), h.ID, callerID)
 	require.NoError(t, err)
-	assert.Equal(t, household.RoleAdmin, m.Role)
+	assert.Equal(t, types.RoleAdmin, m.Role)
 }
 
 // ---------------------------------------------------------------------------
@@ -133,12 +134,12 @@ func TestHouseholdLogic_AddMember_AdminCanAdd(t *testing.T) {
 
 	m, err := logic.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: newMember,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 
 	require.NoError(t, err)
 	assert.Equal(t, newMember, m.UserID)
-	assert.Equal(t, household.RoleMember, m.Role)
+	assert.Equal(t, types.RoleMember, m.Role)
 }
 
 func TestHouseholdLogic_AddMember_NonAdminDenied(t *testing.T) {
@@ -152,14 +153,14 @@ func TestHouseholdLogic_AddMember_NonAdminDenied(t *testing.T) {
 	// Add memberUser as MEMBER (not admin).
 	_, err = repo.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: memberUser,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 
 	// memberUser tries to add anotherUser — should be denied.
 	_, err = logic.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: anotherUser,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, memberUser)
 
 	require.Error(t, err)
@@ -175,13 +176,13 @@ func TestHouseholdLogic_AddMember_DuplicateReturnsError(t *testing.T) {
 
 	_, err = logic.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: newMember,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 
 	_, err = logic.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: newMember,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 
 	require.Error(t, err)
@@ -200,7 +201,7 @@ func TestHouseholdLogic_RemoveMember_AdminCanRemove(t *testing.T) {
 	require.NoError(t, err)
 	_, err = logic.AddMember(context.Background(), h.ID, household.AddMemberInput{
 		UserID: member,
-		Role:   household.RoleMember,
+		Role:   types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 
@@ -220,11 +221,11 @@ func TestHouseholdLogic_RemoveMember_NonAdminDenied(t *testing.T) {
 	h, err := logic.Create(context.Background(), household.CreateInput{Name: "Home"}, callerID)
 	require.NoError(t, err)
 	_, err = repo.AddMember(context.Background(), h.ID, household.AddMemberInput{
-		UserID: memberUser, Role: household.RoleMember,
+		UserID: memberUser, Role: types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 	_, err = repo.AddMember(context.Background(), h.ID, household.AddMemberInput{
-		UserID: anotherMember, Role: household.RoleMember,
+		UserID: anotherMember, Role: types.RoleMember,
 	}, callerID)
 	require.NoError(t, err)
 
