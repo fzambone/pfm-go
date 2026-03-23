@@ -212,6 +212,24 @@ func TestUserRepo_Create_EmailAlreadyTaken(t *testing.T) {
 		"expected ErrUserEmailTaken, got: %v", err)
 }
 
+// TestUserRepo_Create_EmailCaseInsensitiveDuplicate verifies that email uniqueness
+// is case-insensitive: inserting "ALICE@example.com" when "alice@example.com" already
+// exists returns ErrUserEmailTaken.
+func TestUserRepo_Create_EmailCaseInsensitiveDuplicate(t *testing.T) {
+	ctx := context.Background()
+	pool := newTestPool(t, ctx)
+	repo := postgres.NewUserRepo(pool)
+
+	_, err := repo.Create(ctx, integRegisterInput("alice@example.com"), integTestPasswordHash, integCallerID)
+	require.NoError(t, err)
+
+	_, err = repo.Create(ctx, integRegisterInput("ALICE@example.com"), integTestPasswordHash, integCallerID)
+
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, message.ErrUserEmailTaken),
+		"case-insensitive duplicate must return ErrUserEmailTaken, got: %v", err)
+}
+
 // ---------------------------------------------------------------------------
 // FindByID
 // ---------------------------------------------------------------------------
