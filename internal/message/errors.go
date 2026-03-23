@@ -150,8 +150,11 @@ var (
 	ErrUserNotFound = errors.New("user: not found")
 	// ErrUserVersionConflict is returned when an optimistic-lock update finds a stale version.
 	ErrUserVersionConflict = errors.New("user: version conflict")
+	// ErrUserEmailTaken is returned when Register finds an existing user with the same email.
+	ErrUserEmailTaken = errors.New("user: email already taken")
 )
 
+// User repository format strings (adapter layer).
 const (
 	ErrUserFindByEmail    = "user: find by email: %w"
 	ErrUserFindByID       = "user: find by id: %w"
@@ -159,6 +162,15 @@ const (
 	ErrUserUpdateProfile  = "user: update profile: %w"
 	ErrUserChangePassword = "user: change password: %w"
 	ErrUserDeactivate     = "user: deactivate: %w"
+)
+
+// User logic format strings (domain layer).
+const (
+	ErrUserLogicRegister       = "user logic: register: %w"
+	ErrUserLogicFindByID       = "user logic: find by id: %w"
+	ErrUserLogicUpdateProfile  = "user logic: update profile: %w"
+	ErrUserLogicChangePassword = "user logic: change password: %w"
+	ErrUserLogicDeactivate     = "user logic: deactivate: %w"
 )
 
 // Startup errors (used by cmd/pfm/main.go composition root).

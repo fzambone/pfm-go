@@ -45,6 +45,18 @@ func registerInputFactory(overrides ...func(*domainuser.RegisterInput)) domainus
 	return in
 }
 
+// changePasswordInputFactory returns a valid ChangePasswordInput with sensible defaults.
+func changePasswordInputFactory(overrides ...func(*domainuser.ChangePasswordInput)) domainuser.ChangePasswordInput {
+	in := domainuser.ChangePasswordInput{
+		OldPassword: "correct-horse-battery-staple",
+		NewPassword: "new-correct-horse-staple",
+	}
+	for _, o := range overrides {
+		o(&in)
+	}
+	return in
+}
+
 // updateProfileInputFactory returns a valid UpdateProfileInput with sensible defaults.
 func updateProfileInputFactory(overrides ...func(*domainuser.UpdateProfileInput)) domainuser.UpdateProfileInput {
 	in := domainuser.UpdateProfileInput{

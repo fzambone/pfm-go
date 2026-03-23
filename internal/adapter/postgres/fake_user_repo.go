@@ -68,6 +68,10 @@ func (f *FakeUserRepository) Create(_ context.Context, input domainuser.Register
 		return domainuser.User{}, f.err
 	}
 
+	if _, exists := f.byEmail[strings.ToLower(input.Email)]; exists {
+		return domainuser.User{}, fmt.Errorf(message.ErrUserCreate, message.ErrUserEmailTaken)
+	}
+
 	u := domainuser.User{
 		ID:           uuid.New(),
 		Email:        input.Email,
