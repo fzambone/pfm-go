@@ -78,6 +78,11 @@ type HouseholdReader interface {
 	FindByID(ctx context.Context, id uuid.UUID) (Household, error)
 	// ListForUser returns all active households where the given user has an active membership.
 	ListForUser(ctx context.Context, userID uuid.UUID) ([]Household, error)
+	// FindMembership returns the active membership for a user in a household.
+	// Returns an error wrapping ErrHouseholdMemberNotFound when no active membership exists.
+	FindMembership(ctx context.Context, householdID uuid.UUID, userID uuid.UUID) (Membership, error)
+	// ListMembers returns all active memberships for the given household.
+	ListMembers(ctx context.Context, householdID uuid.UUID) ([]Membership, error)
 }
 
 // HouseholdWriter defines the write-only storage contract for the household domain.

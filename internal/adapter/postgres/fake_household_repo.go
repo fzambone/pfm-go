@@ -128,6 +128,50 @@ func (f *FakeHouseholdRepository) ListForUser(_ context.Context, userID uuid.UUI
 	return result, nil
 }
 
+// FindMembership returns the active membership for a user in a household.
+// Returns an error wrapping ErrHouseholdMemberNotFound when no active membership exists.
+// Panics if called outside a test binary.
+func (f *FakeHouseholdRepository) FindMembership(_ context.Context, householdID uuid.UUID, userID uuid.UUID) (household.Membership, error) {
+	if !testing.Testing() {
+		panic("FakeHouseholdRepository: not for production use — wire HouseholdRepo instead")
+	}
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	if f.err != nil {
+		return household.Membership{}, f.err
+	}
+
+	key := memberKey{HouseholdID: householdID, UserID: userID}
+	m, ok := f.members[key]
+	if !ok || f.removed[key] {
+		return household.Membership{}, fmt.Errorf(message.ErrHouseholdFindMembership, message.ErrHouseholdMemberNotFound)
+	}
+	return m, nil
+}
+
+// ListMembers returns all active memberships for the given household.
+// Panics if called outside a test binary.
+func (f *FakeHouseholdRepository) ListMembers(_ context.Context, householdID uuid.UUID) ([]household.Membership, error) {
+	if !testing.Testing() {
+		panic("FakeHouseholdRepository: not for production use — wire HouseholdRepo instead")
+	}
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	if f.err != nil {
+		return nil, f.err
+	}
+
+	var result []household.Membership
+	for key, m := range f.members {
+		if key.HouseholdID == householdID && !f.removed[key] {
+			result = append(result, m)
+		}
+	}
+	return result, nil
+}
+
 // AddMember adds a new membership to the household.
 // Returns an error wrapping ErrHouseholdMemberExists if the user already has an active membership.
 // Panics if called outside a test binary.

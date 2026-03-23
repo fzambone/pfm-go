@@ -181,6 +181,12 @@ var (
 	ErrHouseholdVersionConflict = errors.New("household: version conflict")
 	// ErrHouseholdMemberExists is returned when adding a member who already has an active membership.
 	ErrHouseholdMemberExists = errors.New("household: member already exists")
+	// ErrHouseholdMemberNotFound is returned when a membership lookup finds no active record.
+	ErrHouseholdMemberNotFound = errors.New("household: member not found")
+	// ErrHouseholdNotAdmin is returned when a non-ADMIN attempts an admin-only operation.
+	ErrHouseholdNotAdmin = errors.New("household: caller is not an admin")
+	// ErrHouseholdLastAdmin is returned when removing the last ADMIN would leave the household without one.
+	ErrHouseholdLastAdmin = errors.New("household: cannot remove last admin")
 )
 
 // Household repository format strings (adapter layer).
@@ -191,7 +197,20 @@ const (
 	ErrHouseholdAddMember    = "household: add member: %w"
 	ErrHouseholdRemoveMember = "household: remove member: %w"
 	ErrHouseholdUpdateName   = "household: update name: %w"
-	ErrHouseholdDeactivate   = "household: deactivate: %w"
+	ErrHouseholdDeactivate       = "household: deactivate: %w"
+	ErrHouseholdFindMembership   = "household: find membership: %w"
+	ErrHouseholdListMembers      = "household: list members: %w"
+)
+
+// Household logic format strings (domain layer).
+const (
+	ErrHouseholdLogicCreate       = "household logic: create: %w"
+	ErrHouseholdLogicFindByID     = "household logic: find by id: %w"
+	ErrHouseholdLogicListForUser  = "household logic: list for user: %w"
+	ErrHouseholdLogicAddMember    = "household logic: add member: %w"
+	ErrHouseholdLogicRemoveMember = "household logic: remove member: %w"
+	ErrHouseholdLogicUpdateName   = "household logic: update name: %w"
+	ErrHouseholdLogicDeactivate   = "household logic: deactivate: %w"
 )
 
 // Startup errors (used by cmd/pfm/main.go composition root).
