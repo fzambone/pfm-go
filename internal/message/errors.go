@@ -245,6 +245,16 @@ const (
 	ErrAccountDeactivate     = "account: deactivate: %w"
 )
 
+// Account logic format strings (domain layer).
+const (
+	ErrAccountLogicCreate        = "account logic: create: %w"
+	ErrAccountLogicFindByID      = "account logic: find by id: %w"
+	ErrAccountLogicListForHouse  = "account logic: list for household: %w"
+	ErrAccountLogicUpdateName    = "account logic: update name: %w"
+	ErrAccountLogicUpdateBalance = "account logic: update balance: %w"
+	ErrAccountLogicDeactivate    = "account logic: deactivate: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
