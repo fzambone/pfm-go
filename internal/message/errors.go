@@ -173,6 +173,27 @@ const (
 	ErrUserLogicDeactivate     = "user logic: deactivate: %w"
 )
 
+// Household repository errors.
+var (
+	// ErrHouseholdNotFound is returned when a household lookup by ID finds no active record.
+	ErrHouseholdNotFound = errors.New("household: not found")
+	// ErrHouseholdVersionConflict is returned when an optimistic-lock update finds a stale version.
+	ErrHouseholdVersionConflict = errors.New("household: version conflict")
+	// ErrHouseholdMemberExists is returned when adding a member who already has an active membership.
+	ErrHouseholdMemberExists = errors.New("household: member already exists")
+)
+
+// Household repository format strings (adapter layer).
+const (
+	ErrHouseholdCreate       = "household: create: %w"
+	ErrHouseholdFindByID     = "household: find by id: %w"
+	ErrHouseholdListForUser  = "household: list for user: %w"
+	ErrHouseholdAddMember    = "household: add member: %w"
+	ErrHouseholdRemoveMember = "household: remove member: %w"
+	ErrHouseholdUpdateName   = "household: update name: %w"
+	ErrHouseholdDeactivate   = "household: deactivate: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
