@@ -9,9 +9,16 @@ import (
 	"github.com/zambone/pfm-go/internal/message"
 )
 
+// loginUserFinder is the narrow storage contract required by LoginLogic.
+// It is a subset of Repository, following interface segregation:
+// LoginLogic only needs to look up users by email.
+type loginUserFinder interface {
+	FindByEmail(ctx context.Context, email string) (User, error)
+}
+
 // LoginLogic orchestrates credential validation and token issuance for user login.
 type LoginLogic struct {
-	repo     Repository
+	repo     loginUserFinder
 	hasher   passwordVerifier
 	tokens   tokenIssuer
 	clk      clocker
@@ -20,7 +27,7 @@ type LoginLogic struct {
 
 // NewLoginLogic constructs a LoginLogic. Panics if any dependency is nil or tokenTTL is zero.
 func NewLoginLogic(
-	repo Repository,
+	repo loginUserFinder,
 	hasher passwordVerifier,
 	tokens tokenIssuer,
 	clk clocker,
