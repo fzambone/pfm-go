@@ -12,6 +12,128 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const changeUserPassword = `-- name: ChangeUserPassword :one
+UPDATE users
+SET password_hash = $1,
+    updated_at    = NOW(),
+    updated_by    = $2,
+    version       = version + 1
+WHERE id          = $3
+  AND version     = $4
+  AND deleted_at  IS NULL
+RETURNING id, email, display_name, password_hash, version, created_at, updated_at, created_by, updated_by
+`
+
+type ChangeUserPasswordParams struct {
+	PasswordHash    string      `json:"password_hash"`
+	UpdatedBy       pgtype.UUID `json:"updated_by"`
+	ID              uuid.UUID   `json:"id"`
+	ExpectedVersion int32       `json:"expected_version"`
+}
+
+type ChangeUserPasswordRow struct {
+	ID           uuid.UUID          `json:"id"`
+	Email        string             `json:"email"`
+	DisplayName  string             `json:"display_name"`
+	PasswordHash string             `json:"password_hash"`
+	Version      int32              `json:"version"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	CreatedBy    pgtype.UUID        `json:"created_by"`
+	UpdatedBy    pgtype.UUID        `json:"updated_by"`
+}
+
+func (q *Queries) ChangeUserPassword(ctx context.Context, arg ChangeUserPasswordParams) (ChangeUserPasswordRow, error) {
+	row := q.db.QueryRow(ctx, changeUserPassword,
+		arg.PasswordHash,
+		arg.UpdatedBy,
+		arg.ID,
+		arg.ExpectedVersion,
+	)
+	var i ChangeUserPasswordRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.DisplayName,
+		&i.PasswordHash,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (email, password_hash, display_name, created_by, updated_by)
+VALUES ($1, $2, $3,
+        $4, $5)
+RETURNING id, email, display_name, password_hash, version, created_at, updated_at, created_by, updated_by
+`
+
+type CreateUserParams struct {
+	Email        string      `json:"email"`
+	PasswordHash string      `json:"password_hash"`
+	DisplayName  string      `json:"display_name"`
+	CreatedBy    pgtype.UUID `json:"created_by"`
+	UpdatedBy    pgtype.UUID `json:"updated_by"`
+}
+
+type CreateUserRow struct {
+	ID           uuid.UUID          `json:"id"`
+	Email        string             `json:"email"`
+	DisplayName  string             `json:"display_name"`
+	PasswordHash string             `json:"password_hash"`
+	Version      int32              `json:"version"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	CreatedBy    pgtype.UUID        `json:"created_by"`
+	UpdatedBy    pgtype.UUID        `json:"updated_by"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Email,
+		arg.PasswordHash,
+		arg.DisplayName,
+		arg.CreatedBy,
+		arg.UpdatedBy,
+	)
+	var i CreateUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.DisplayName,
+		&i.PasswordHash,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const deactivateUser = `-- name: DeactivateUser :exec
+UPDATE users
+SET deleted_at = NOW(),
+    updated_at = NOW(),
+    updated_by = $1
+WHERE id       = $2
+  AND deleted_at IS NULL
+`
+
+type DeactivateUserParams struct {
+	UpdatedBy pgtype.UUID `json:"updated_by"`
+	ID        uuid.UUID   `json:"id"`
+}
+
+func (q *Queries) DeactivateUser(ctx context.Context, arg DeactivateUserParams) error {
+	_, err := q.db.Exec(ctx, deactivateUser, arg.UpdatedBy, arg.ID)
+	return err
+}
+
 const findUserByEmail = `-- name: FindUserByEmail :one
 SELECT
     id,
@@ -39,6 +161,95 @@ func (q *Queries) FindUserByEmail(ctx context.Context, email string) (FindUserBy
 		&i.Email,
 		&i.PasswordHash,
 		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const findUserByID = `-- name: FindUserByID :one
+SELECT id, email, display_name, password_hash, version, created_at, updated_at, created_by, updated_by
+FROM users
+WHERE id = $1
+  AND deleted_at IS NULL
+`
+
+type FindUserByIDRow struct {
+	ID           uuid.UUID          `json:"id"`
+	Email        string             `json:"email"`
+	DisplayName  string             `json:"display_name"`
+	PasswordHash string             `json:"password_hash"`
+	Version      int32              `json:"version"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	CreatedBy    pgtype.UUID        `json:"created_by"`
+	UpdatedBy    pgtype.UUID        `json:"updated_by"`
+}
+
+func (q *Queries) FindUserByID(ctx context.Context, id uuid.UUID) (FindUserByIDRow, error) {
+	row := q.db.QueryRow(ctx, findUserByID, id)
+	var i FindUserByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.DisplayName,
+		&i.PasswordHash,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const updateUserProfile = `-- name: UpdateUserProfile :one
+UPDATE users
+SET display_name = $1,
+    updated_at   = NOW(),
+    updated_by   = $2,
+    version      = version + 1
+WHERE id         = $3
+  AND version    = $4
+  AND deleted_at IS NULL
+RETURNING id, email, display_name, password_hash, version, created_at, updated_at, created_by, updated_by
+`
+
+type UpdateUserProfileParams struct {
+	DisplayName     string      `json:"display_name"`
+	UpdatedBy       pgtype.UUID `json:"updated_by"`
+	ID              uuid.UUID   `json:"id"`
+	ExpectedVersion int32       `json:"expected_version"`
+}
+
+type UpdateUserProfileRow struct {
+	ID           uuid.UUID          `json:"id"`
+	Email        string             `json:"email"`
+	DisplayName  string             `json:"display_name"`
+	PasswordHash string             `json:"password_hash"`
+	Version      int32              `json:"version"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	CreatedBy    pgtype.UUID        `json:"created_by"`
+	UpdatedBy    pgtype.UUID        `json:"updated_by"`
+}
+
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UpdateUserProfileRow, error) {
+	row := q.db.QueryRow(ctx, updateUserProfile,
+		arg.DisplayName,
+		arg.UpdatedBy,
+		arg.ID,
+		arg.ExpectedVersion,
+	)
+	var i UpdateUserProfileRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.DisplayName,
+		&i.PasswordHash,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
