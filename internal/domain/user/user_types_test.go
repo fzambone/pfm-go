@@ -10,7 +10,7 @@ import (
 )
 
 // TestUser_FullStruct verifies that User carries all required fields including
-// display name and audit fields. This is a compile-time correctness test —
+// display name, version, and audit fields. This is a compile-time correctness test —
 // if the fields do not exist, this file will not compile.
 func TestUser_FullStruct(t *testing.T) {
 	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -21,6 +21,7 @@ func TestUser_FullStruct(t *testing.T) {
 		Email:        "user@example.com",
 		DisplayName:  "Test User",
 		PasswordHash: "hash",
+		Version:      1,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 		CreatedBy:    callerID,
@@ -29,6 +30,9 @@ func TestUser_FullStruct(t *testing.T) {
 
 	if u.DisplayName != "Test User" {
 		t.Errorf("DisplayName = %q, want %q", u.DisplayName, "Test User")
+	}
+	if u.Version != 1 {
+		t.Errorf("Version = %d, want 1", u.Version)
 	}
 	if u.CreatedAt != now {
 		t.Errorf("CreatedAt = %v, want %v", u.CreatedAt, now)

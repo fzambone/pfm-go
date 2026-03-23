@@ -14,6 +14,7 @@ type User struct {
 	Email        string
 	DisplayName  string
 	PasswordHash string
+	Version      int // optimistic concurrency version, mirrors the DB column
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	CreatedBy    uuid.UUID
@@ -45,13 +46,38 @@ type LoginResult struct {
 	ExpiresAt time.Time
 }
 
-// Repository defines the storage contract required by LoginLogic.
-// Defined at the consumer (domain) rather than the provider (adapter) per interface segregation.
-type Repository interface {
+// UserReader defines the read-only storage contract for the user domain.
+type UserReader interface {
+	// FindByID returns the active (non-deleted) user with the given ID.
+	// Returns an error wrapping ErrUserNotFound when no matching active user exists.
+	FindByID(ctx context.Context, id uuid.UUID) (User, error)
 	// FindByEmail returns the active (non-deleted) user with the given email.
 	// The lookup is case-insensitive. Returns an error wrapping ErrLoginInvalidCredentials
 	// when no matching active user exists.
 	FindByEmail(ctx context.Context, email string) (User, error)
+}
+
+// UserWriter defines the write-only storage contract for the user domain.
+type UserWriter interface {
+	// Create persists a new user and returns the saved entity with server-assigned fields
+	// (ID, Version, timestamps).
+	Create(ctx context.Context, input RegisterInput, passwordHash string, callerID uuid.UUID) (User, error)
+	// UpdateProfile changes the display name of an existing user.
+	// Returns an error wrapping ErrUserVersionConflict when expectedVersion does not match.
+	UpdateProfile(ctx context.Context, id uuid.UUID, input UpdateProfileInput, expectedVersion int, callerID uuid.UUID) (User, error)
+	// ChangePassword replaces the password hash of an existing user.
+	// Returns an error wrapping ErrUserVersionConflict when expectedVersion does not match.
+	ChangePassword(ctx context.Context, id uuid.UUID, newHash string, expectedVersion int, callerID uuid.UUID) (User, error)
+	// Deactivate soft-deletes the user. Idempotent — calling with an already-deactivated
+	// or non-existent ID is not an error.
+	Deactivate(ctx context.Context, id uuid.UUID, callerID uuid.UUID) error
+}
+
+// Repository defines the full storage contract for the user domain.
+// Defined at the consumer (domain) rather than the provider (adapter) per interface segregation.
+type Repository interface {
+	UserReader
+	UserWriter
 }
 
 // passwordVerifier abstracts the credential verification step.

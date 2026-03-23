@@ -39,12 +39,12 @@ func (r *UserRepo) FindByEmail(ctx context.Context, email string) (domainuser.Us
 	row, err := New(db).FindUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			err = fmt.Errorf(message.ErrUserNotFound, message.ErrLoginInvalidCredentials)
+			err = fmt.Errorf(message.ErrUserFindByEmail, message.ErrLoginInvalidCredentials)
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return domainuser.User{}, err
 		}
-		err = fmt.Errorf(message.ErrUserNotFound, err)
+		err = fmt.Errorf(message.ErrUserFindByEmail, err)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 		return domainuser.User{}, err

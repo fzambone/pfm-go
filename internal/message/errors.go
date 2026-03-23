@@ -145,8 +145,20 @@ const (
 )
 
 // User repository errors.
+var (
+	// ErrUserNotFound is returned when a user lookup by ID finds no active record.
+	ErrUserNotFound = errors.New("user: not found")
+	// ErrUserVersionConflict is returned when an optimistic-lock update finds a stale version.
+	ErrUserVersionConflict = errors.New("user: version conflict")
+)
+
 const (
-	ErrUserNotFound = "user: not found: %w"
+	ErrUserFindByEmail    = "user: find by email: %w"
+	ErrUserFindByID       = "user: find by id: %w"
+	ErrUserCreate         = "user: create: %w"
+	ErrUserUpdateProfile  = "user: update profile: %w"
+	ErrUserChangePassword = "user: change password: %w"
+	ErrUserDeactivate     = "user: deactivate: %w"
 )
 
 // Startup errors (used by cmd/pfm/main.go composition root).
