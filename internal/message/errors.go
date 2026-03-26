@@ -255,6 +255,28 @@ const (
 	ErrAccountLogicDeactivate    = "account logic: deactivate: %w"
 )
 
+// Credit card settings repository errors.
+var (
+	// ErrCreditCardSettingsNotFound is returned when settings lookup finds no active record.
+	ErrCreditCardSettingsNotFound = errors.New("credit card settings: not found")
+	// ErrCreditCardSettingsExists is returned when creating settings for an account that already has them.
+	ErrCreditCardSettingsExists = errors.New("credit card settings: already exist for account")
+	// ErrCreditCardSettingsVersionConflict is returned when an optimistic-lock update finds a stale version.
+	ErrCreditCardSettingsVersionConflict = errors.New("credit card settings: version conflict")
+	// ErrCreditCardSettingsNotCreditCard is returned when creating settings for a non-credit-card account.
+	ErrCreditCardSettingsNotCreditCard = errors.New("credit card settings: account is not a credit card")
+)
+
+// Credit card settings repository format strings (adapter layer).
+const (
+	ErrCCSettingsCreate         = "credit card settings: create: %w"
+	ErrCCSettingsFindByAccount  = "credit card settings: find by account: %w"
+	ErrCCSettingsUpdateClosing  = "credit card settings: update closing day: %w"
+	ErrCCSettingsUpdateDueDay   = "credit card settings: update due day: %w"
+	ErrCCSettingsUpdateLimit    = "credit card settings: update limit: %w"
+	ErrCCSettingsDelete         = "credit card settings: delete: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
