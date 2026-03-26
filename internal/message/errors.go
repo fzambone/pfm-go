@@ -277,6 +277,16 @@ const (
 	ErrCCSettingsDelete         = "credit card settings: delete: %w"
 )
 
+// Credit card settings logic format strings (domain layer).
+const (
+	ErrCCLogicCreate        = "credit card logic: create: %w"
+	ErrCCLogicFindByAccount = "credit card logic: find by account: %w"
+	ErrCCLogicUpdateClosing = "credit card logic: update closing day: %w"
+	ErrCCLogicUpdateDueDay  = "credit card logic: update due day: %w"
+	ErrCCLogicUpdateLimit   = "credit card logic: update limit: %w"
+	ErrCCLogicDelete        = "credit card logic: delete: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
