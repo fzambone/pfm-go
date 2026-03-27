@@ -300,6 +300,13 @@ const (
 	ErrLedgerGetHistory      = "ledger: get transaction history: %w"
 )
 
+// Ledger logic format strings (domain layer).
+const (
+	ErrLedgerLogicPost       = "ledger logic: post transaction: %w"
+	ErrLedgerLogicGetBalance = "ledger logic: get balance: %w"
+	ErrLedgerLogicGetHistory = "ledger logic: get history: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
