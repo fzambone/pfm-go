@@ -287,6 +287,19 @@ const (
 	ErrCCLogicDelete        = "credit card logic: delete: %w"
 )
 
+// Ledger repository errors.
+var (
+	// ErrLedgerUnbalanced is returned when a transaction's entries do not balance (debits != credits).
+	ErrLedgerUnbalanced = errors.New("ledger: transaction entries do not balance")
+)
+
+// Ledger repository format strings (adapter layer).
+const (
+	ErrLedgerPostTransaction = "ledger: post transaction: %w"
+	ErrLedgerGetBalance      = "ledger: get balance: %w"
+	ErrLedgerGetHistory      = "ledger: get transaction history: %w"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
