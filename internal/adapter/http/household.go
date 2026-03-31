@@ -113,7 +113,7 @@ type getHouseholdService interface {
 }
 
 // GetHouseholdHandler returns an http.HandlerFunc that retrieves a household by ID.
-// The household ID is read from the URL path parameter "id". Panics if svc is nil.
+// The household ID is read from the URL path parameter "household_id". Panics if svc is nil.
 //
 // @Summary Get household by ID
 // @Tags households
@@ -129,7 +129,7 @@ func GetHouseholdHandler(svc getHouseholdService) http.HandlerFunc {
 		panic("http: GetHouseholdHandler requires non-nil getHouseholdService")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := parseUUID(r.PathValue("id"))
+		id, err := parseUUID(r.PathValue("household_id"))
 		if err != nil {
 			WriteJSON(w, http.StatusBadRequest, map[string]string{"error": message.MsgAuthzBadRequest})
 			return
@@ -215,7 +215,7 @@ func AddMemberHandler(svc addMemberService) http.HandlerFunc {
 		panic("http: AddMemberHandler requires non-nil addMemberService")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		householdID, err := parseUUID(r.PathValue("id"))
+		householdID, err := parseUUID(r.PathValue("household_id"))
 		if err != nil {
 			WriteJSON(w, http.StatusBadRequest, map[string]string{"error": message.MsgAuthzBadRequest})
 			return
@@ -274,7 +274,7 @@ func RemoveMemberHandler(svc removeMemberService) http.HandlerFunc {
 		panic("http: RemoveMemberHandler requires non-nil removeMemberService")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		householdID, err := parseUUID(r.PathValue("id"))
+		householdID, err := parseUUID(r.PathValue("household_id"))
 		if err != nil {
 			WriteJSON(w, http.StatusBadRequest, map[string]string{"error": message.MsgAuthzBadRequest})
 			return
@@ -328,7 +328,7 @@ func UpdateHouseholdNameHandler(svc updateHouseholdNameService) http.HandlerFunc
 		panic("http: UpdateHouseholdNameHandler requires non-nil updateHouseholdNameService")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := parseUUID(r.PathValue("id"))
+		id, err := parseUUID(r.PathValue("household_id"))
 		if err != nil {
 			WriteJSON(w, http.StatusBadRequest, map[string]string{"error": message.MsgAuthzBadRequest})
 			return
@@ -377,7 +377,7 @@ func DeactivateHouseholdHandler(svc deactivateHouseholdService) http.HandlerFunc
 		panic("http: DeactivateHouseholdHandler requires non-nil deactivateHouseholdService")
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := parseUUID(r.PathValue("id"))
+		id, err := parseUUID(r.PathValue("household_id"))
 		if err != nil {
 			WriteJSON(w, http.StatusBadRequest, map[string]string{"error": message.MsgAuthzBadRequest})
 			return

@@ -143,7 +143,7 @@ func TestGetHouseholdHandler_ValidID_Returns200(t *testing.T) {
 	handler := pfmhttp.GetHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/households/"+houseID.String(), nil)
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
 
@@ -161,7 +161,7 @@ func TestGetHouseholdHandler_NotFound_Returns404(t *testing.T) {
 	handler := pfmhttp.GetHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/households/"+uuid.Nil.String(), nil)
-	r.SetPathValue("id", uuid.Nil.String())
+	r.SetPathValue("household_id", uuid.Nil.String())
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
 
@@ -176,7 +176,7 @@ func TestGetHouseholdHandler_InvalidUUID_Returns400(t *testing.T) {
 	handler := pfmhttp.GetHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/households/bad", nil)
-	r.SetPathValue("id", "bad")
+	r.SetPathValue("household_id", "bad")
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
 
@@ -263,7 +263,7 @@ func TestAddMemberHandler_ValidRequest_Returns201(t *testing.T) {
 
 	body := `{"user_id":"00000000-0000-0000-0000-000000000020","role":"MEMBER"}`
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/households/"+houseID.String()+"/members", strings.NewReader(body))
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	r = r.WithContext(ctxWithUser(callerID))
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
@@ -284,7 +284,7 @@ func TestAddMemberHandler_AlreadyMember_Returns409(t *testing.T) {
 
 	body := `{"user_id":"00000000-0000-0000-0000-000000000020","role":"MEMBER"}`
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/households/"+houseID.String()+"/members", strings.NewReader(body))
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	r = r.WithContext(ctxWithUser(callerID))
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
@@ -300,7 +300,7 @@ func TestAddMemberHandler_MalformedJSON_Returns400(t *testing.T) {
 	handler := pfmhttp.AddMemberHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/households/"+houseID.String()+"/members", strings.NewReader("{bad"))
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
 
@@ -331,7 +331,7 @@ func TestRemoveMemberHandler_Success_Returns204(t *testing.T) {
 	handler := pfmhttp.RemoveMemberHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+houseID.String()+"/members/"+memberID.String(), nil)
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	r.SetPathValue("user_id", memberID.String())
 	r = r.WithContext(ctxWithUser(callerID))
 	w := httptest.NewRecorder()
@@ -349,7 +349,7 @@ func TestRemoveMemberHandler_LastAdmin_ReturnsConflict(t *testing.T) {
 	handler := pfmhttp.RemoveMemberHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+houseID.String()+"/members/"+callerID.String(), nil)
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	r.SetPathValue("user_id", callerID.String())
 	r = r.WithContext(ctxWithUser(callerID))
 	w := httptest.NewRecorder()
@@ -366,7 +366,7 @@ func TestRemoveMemberHandler_MemberNotFound_Returns404(t *testing.T) {
 	handler := pfmhttp.RemoveMemberHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+houseID.String()+"/members/"+uuid.Nil.String(), nil)
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	r.SetPathValue("user_id", uuid.Nil.String())
 	r = r.WithContext(ctxWithUser(callerID))
 	w := httptest.NewRecorder()
@@ -403,7 +403,7 @@ func TestUpdateHouseholdNameHandler_ValidRequest_Returns200(t *testing.T) {
 
 	body := `{"name":"New Name","version":1}`
 	r := httptest.NewRequest(http.MethodPut, "/api/v1/households/"+houseID.String(), strings.NewReader(body))
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	r = r.WithContext(ctxWithUser(callerID))
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
@@ -423,7 +423,7 @@ func TestUpdateHouseholdNameHandler_StaleVersion_Returns409(t *testing.T) {
 
 	body := `{"name":"New Name","version":1}`
 	r := httptest.NewRequest(http.MethodPut, "/api/v1/households/"+houseID.String(), strings.NewReader(body))
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	r = r.WithContext(ctxWithUser(callerID))
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
@@ -439,7 +439,7 @@ func TestUpdateHouseholdNameHandler_MalformedJSON_Returns400(t *testing.T) {
 	handler := pfmhttp.UpdateHouseholdNameHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPut, "/api/v1/households/"+houseID.String(), strings.NewReader("{bad"))
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
 
@@ -470,7 +470,7 @@ func TestDeactivateHouseholdHandler_Success_Returns204(t *testing.T) {
 	handler := pfmhttp.DeactivateHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+houseID.String(), nil)
-	r.SetPathValue("id", houseID.String())
+	r.SetPathValue("household_id", houseID.String())
 	r = r.WithContext(ctxWithUser(callerID))
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
@@ -487,7 +487,7 @@ func TestDeactivateHouseholdHandler_NotFound_Returns404(t *testing.T) {
 	handler := pfmhttp.DeactivateHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+uuid.Nil.String(), nil)
-	r.SetPathValue("id", uuid.Nil.String())
+	r.SetPathValue("household_id", uuid.Nil.String())
 	r = r.WithContext(ctxWithUser(callerID))
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
@@ -503,7 +503,7 @@ func TestDeactivateHouseholdHandler_InvalidUUID_Returns400(t *testing.T) {
 	handler := pfmhttp.DeactivateHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/bad", nil)
-	r.SetPathValue("id", "bad")
+	r.SetPathValue("household_id", "bad")
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
 
