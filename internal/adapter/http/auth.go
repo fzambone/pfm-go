@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -40,8 +39,8 @@ func LoginHandler(svc loginService) http.HandlerFunc {
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req loginRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, message.MsgLoginBadRequest)
+		if err := DecodeBody(r, &req); err != nil {
+			WriteJSON(w, http.StatusBadRequest, map[string]string{"error": message.MsgLoginBadRequest})
 			return
 		}
 
@@ -51,47 +50,25 @@ func LoginHandler(svc loginService) http.HandlerFunc {
 		if err := v.Error(); err != nil {
 			var ve *validate.ValidationError
 			errors.As(err, &ve)
-			writeJSONValidationError(w, ve)
+			WriteValidationError(w, ve)
 			return
 		}
 
 		result, err := svc.Login(r.Context(), req.Email, req.Password)
 		if err != nil {
 			if errors.Is(err, message.ErrLoginInvalidCredentials) {
-				writeJSONError(w, http.StatusUnauthorized, message.MsgLoginInvalidCredentials)
+				WriteError(w, err)
 				return
 			}
 			slog.ErrorContext(r.Context(), message.MsgServerError, "error", err)
-			writeJSONError(w, http.StatusInternalServerError, message.MsgServerError)
+			WriteError(w, err)
 			return
 		}
 
-		w.Header().Set(headerContentType, mimeJSON)
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(loginResponse{ // best-effort
+		WriteJSON(w, http.StatusOK, loginResponse{
 			Token:     result.Token,
 			ExpiresAt: result.ExpiresAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
 		})
 	}
 }
 
-// writeJSONError writes {"error": msg} with the given HTTP status.
-func writeJSONError(w http.ResponseWriter, status int, msg string) {
-	w.Header().Set(headerContentType, mimeJSON)
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg}) // best-effort
-}
-
-// writeJSONValidationError writes a 400 response with per-field validation details.
-func writeJSONValidationError(w http.ResponseWriter, ve *validate.ValidationError) {
-	fields := make(map[string]string, len(ve.Violations))
-	for _, v := range ve.Violations {
-		fields[v.Field] = v.Message
-	}
-	w.Header().Set(headerContentType, mimeJSON)
-	w.WriteHeader(http.StatusBadRequest)
-	_ = json.NewEncoder(w).Encode(map[string]any{ // best-effort
-		"error":  message.MsgValidationFailed,
-		"fields": fields,
-	})
-}
