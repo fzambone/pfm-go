@@ -307,6 +307,18 @@ const (
 	ErrLedgerLogicGetHistory = "ledger logic: get history: %w"
 )
 
+// HTTP response messages (used by adapter/http response infrastructure).
+const (
+	MsgBadRequestBody   = "invalid request body"
+	MsgNotFound         = "resource not found"
+	MsgConflict         = "resource conflict"
+	MsgInternalError    = "internal server error"
+	MsgUnbalancedLedger = "transaction entries do not balance"
+	MsgBalanceNotZero   = "account balance must be zero to deactivate"
+	MsgNotCreditCard    = "account is not a credit card"
+	MsgLastAdmin        = "cannot remove last admin"
+)
+
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"

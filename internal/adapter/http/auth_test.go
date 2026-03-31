@@ -160,7 +160,7 @@ func TestLoginHandler_InfraError_Returns500(t *testing.T) {
 
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 	body := decodeBody(t, w)
-	assert.Equal(t, message.MsgServerError, body["error"])
+	assert.Equal(t, message.MsgInternalError, body["error"])
 }
 
 // TestLoginHandler_NilService_Panics verifies the nil guard fires at wiring time.
