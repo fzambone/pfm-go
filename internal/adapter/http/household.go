@@ -69,6 +69,16 @@ type createHouseholdRequest struct {
 
 // CreateHouseholdHandler returns an http.HandlerFunc that creates a new household.
 // The caller is automatically added as an ADMIN member. Panics if svc is nil.
+//
+// @Summary Create a household
+// @Tags households
+// @Accept json
+// @Produce json
+// @Param body body createHouseholdRequest true "Household input"
+// @Success 201 {object} householdResponse
+// @Failure 400 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households [post]
 func CreateHouseholdHandler(svc createHouseholdService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: CreateHouseholdHandler requires non-nil createHouseholdService")
@@ -104,6 +114,16 @@ type getHouseholdService interface {
 
 // GetHouseholdHandler returns an http.HandlerFunc that retrieves a household by ID.
 // The household ID is read from the URL path parameter "id". Panics if svc is nil.
+//
+// @Summary Get household by ID
+// @Tags households
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Success 200 {object} householdResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id} [get]
 func GetHouseholdHandler(svc getHouseholdService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: GetHouseholdHandler requires non-nil getHouseholdService")
@@ -134,6 +154,13 @@ type listHouseholdsService interface {
 
 // ListHouseholdsHandler returns an http.HandlerFunc that lists all households
 // for the authenticated user. Panics if svc is nil.
+//
+// @Summary List households for the authenticated user
+// @Tags households
+// @Produce json
+// @Success 200 {array} householdResponse
+// @Security BearerAuth
+// @Router /api/v1/households [get]
 func ListHouseholdsHandler(svc listHouseholdsService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: ListHouseholdsHandler requires non-nil listHouseholdsService")
@@ -171,6 +198,18 @@ type addMemberRequest struct {
 
 // AddMemberHandler returns an http.HandlerFunc that adds a member to a household.
 // The household ID is read from the URL path parameter "id". Panics if svc is nil.
+//
+// @Summary Add a member to a household
+// @Tags members
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param body body addMemberRequest true "Member input"
+// @Success 201 {object} membershipResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/members [post]
 func AddMemberHandler(svc addMemberService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: AddMemberHandler requires non-nil addMemberService")
@@ -219,6 +258,17 @@ type removeMemberService interface {
 // RemoveMemberHandler returns an http.HandlerFunc that removes a member from a household.
 // The household ID and user ID are read from URL path parameters "id" and "user_id".
 // Panics if svc is nil.
+//
+// @Summary Remove a member from a household
+// @Tags members
+// @Param household_id path string true "Household ID (UUID)"
+// @Param user_id path string true "User ID to remove (UUID)"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/members/{user_id} [delete]
 func RemoveMemberHandler(svc removeMemberService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: RemoveMemberHandler requires non-nil removeMemberService")
@@ -261,6 +311,18 @@ type updateHouseholdNameRequest struct {
 
 // UpdateHouseholdNameHandler returns an http.HandlerFunc that renames a household.
 // The household ID is read from the URL path parameter "id". Panics if svc is nil.
+//
+// @Summary Update household name
+// @Tags households
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param body body updateHouseholdNameRequest true "Name update input"
+// @Success 200 {object} householdResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id} [put]
 func UpdateHouseholdNameHandler(svc updateHouseholdNameService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: UpdateHouseholdNameHandler requires non-nil updateHouseholdNameService")
@@ -301,6 +363,15 @@ type deactivateHouseholdService interface {
 
 // DeactivateHouseholdHandler returns an http.HandlerFunc that soft-deletes a household.
 // The household ID is read from the URL path parameter "id". Panics if svc is nil.
+//
+// @Summary Deactivate a household
+// @Tags households
+// @Param household_id path string true "Household ID (UUID)"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id} [delete]
 func DeactivateHouseholdHandler(svc deactivateHouseholdService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: DeactivateHouseholdHandler requires non-nil deactivateHouseholdService")

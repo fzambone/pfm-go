@@ -36,6 +36,14 @@ var (
 	GitCommit = "unknown"
 )
 
+// @title PFM-Go API
+// @version 1.0
+// @description Personal Financial Manager REST API — double-entry accounting for households.
+// @basePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter "Bearer {token}" (obtained from POST /auth/login).
 func main() {
 	if err := run(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "fatal: %v\n", err)

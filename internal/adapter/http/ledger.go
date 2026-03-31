@@ -95,6 +95,18 @@ type entryInputRequest struct {
 // PostTransactionHandler returns an http.HandlerFunc that posts a balanced
 // double-entry transaction. The household ID is read from path parameter "household_id".
 // Panics if svc is nil.
+//
+// @Summary Post a balanced transaction
+// @Tags ledger
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param body body postTransactionRequest true "Transaction with entries"
+// @Success 201 {object} transactionResponse
+// @Failure 400 {object} map[string]string
+// @Failure 422 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/transactions [post]
 func PostTransactionHandler(svc postTransactionService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: PostTransactionHandler requires non-nil postTransactionService")
@@ -158,6 +170,17 @@ type getBalanceService interface {
 // GetBalanceHandler returns an http.HandlerFunc that returns the current balance
 // for an account. The account ID is read from path parameter "account_id".
 // Panics if svc is nil.
+//
+// @Summary Get account balance
+// @Tags ledger
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param account_id path string true "Account ID (UUID)"
+// @Success 200 {object} balanceResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{account_id}/balance [get]
 func GetBalanceHandler(svc getBalanceService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: GetBalanceHandler requires non-nil getBalanceService")
@@ -192,6 +215,17 @@ type getTransactionHistoryService interface {
 // GetTransactionHistoryHandler returns an http.HandlerFunc that lists transactions
 // for a household with optional filtering. Query parameters: account_id, limit, offset.
 // Panics if svc is nil.
+//
+// @Summary Get transaction history
+// @Tags ledger
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param account_id query string false "Filter by account ID (UUID)"
+// @Param limit query int false "Max results"
+// @Param offset query int false "Skip results"
+// @Success 200 {array} transactionResponse
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/transactions [get]
 func GetTransactionHistoryHandler(svc getTransactionHistoryService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: GetTransactionHistoryHandler requires non-nil getTransactionHistoryService")
