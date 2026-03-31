@@ -30,7 +30,7 @@ func TestPasetoTokenService_Issue_ThenValidate_ReturnsUserID(t *testing.T) {
 	require.NoError(t, err)
 	ctx := context.Background()
 
-	token, err := svc.Issue(ctx, testUserID, time.Hour)
+	token, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 	assert.NotEmpty(t, token)
 
@@ -47,10 +47,10 @@ func TestPasetoTokenService_Issue_DifferentSaltsEachCall(t *testing.T) {
 	require.NoError(t, err)
 	ctx := context.Background()
 
-	t1, err := svc.Issue(ctx, testUserID, time.Hour)
+	t1, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
-	t2, err := svc.Issue(ctx, testUserID, time.Hour)
+	t2, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
 	assert.NotEqual(t, t1, t2, "each Issue must produce a unique token due to random nonce")
@@ -63,7 +63,7 @@ func TestPasetoTokenService_Validate_ExpiredToken_ReturnsErrTokenExpired(t *test
 	require.NoError(t, err)
 	ctx := context.Background()
 
-	token, err := svc.Issue(ctx, testUserID, time.Hour)
+	token, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
 	// Advance clock past expiry.
@@ -130,7 +130,7 @@ func TestPasetoTokenService_Validate_WrongKey_ReturnsErrTokenInvalid(t *testing.
 	svc2, err := authadapter.NewPasetoTokenService(otherKey, clk)
 	require.NoError(t, err)
 
-	token, err := svc1.Issue(context.Background(), testUserID, time.Hour)
+	token, err := svc1.Issue(context.Background(), testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
 	_, err = svc2.Validate(context.Background(), token)
@@ -146,7 +146,7 @@ func BenchmarkPasetoTokenService_Validate(b *testing.B) {
 		b.Fatal(err)
 	}
 	ctx := context.Background()
-	token, err := svc.Issue(ctx, testUserID, time.Hour)
+	token, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	if err != nil {
 		b.Fatal(err)
 	}

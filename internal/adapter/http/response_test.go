@@ -162,6 +162,41 @@ func TestDecodeBody_EmptyBody(t *testing.T) {
 	require.Error(t, err)
 }
 
+// TestDecodeBody_OversizedBody verifies that a request body exceeding the max
+// allowed size is rejected with an error before being fully read into memory.
+func TestDecodeBody_OversizedBody(t *testing.T) {
+	t.Parallel()
+
+	type input struct {
+		Name string `json:"name"`
+	}
+
+	// Create a body larger than the max allowed size (1 MB + 1 byte).
+	oversized := strings.Repeat("x", 1024*1024+1)
+	body := `{"name":"` + oversized + `"}`
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+	var got input
+	err := pfmhttp.DecodeBody(r, &got)
+
+	require.Error(t, err)
+}
+
+// TestDecodeBody_NormalSizedBody verifies that a body within the limit is decoded normally.
+func TestDecodeBody_NormalSizedBody(t *testing.T) {
+	t.Parallel()
+
+	type input struct {
+		Name string `json:"name"`
+	}
+
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"name":"Alice"}`))
+	var got input
+	err := pfmhttp.DecodeBody(r, &got)
+
+	require.NoError(t, err)
+	assert.Equal(t, "Alice", got.Name)
+}
+
 // --- MapError tests ---
 
 // TestMapError_DomainErrors verifies AC2–AC4 and AC8: each domain error sentinel

@@ -27,9 +27,9 @@ const (
 	testPassword = "correct-horse-battery-staple"
 )
 
-// newLogic builds a LoginLogic pre-seeded with one active user.
+// loginLogicFactory builds a LoginLogic pre-seeded with one active user.
 // Returns the logic and the fake repo so individual tests can manipulate state.
-func newLogic(t *testing.T) (*domainuser.LoginLogic, *postgres.FakeUserRepository) {
+func loginLogicFactory(t *testing.T) (*domainuser.LoginLogic, *postgres.FakeUserRepository) {
 	t.Helper()
 	clk := clock.NewFakeClock(fixedTime)
 	repo := postgres.NewFakeUserRepository()
@@ -53,7 +53,7 @@ func newLogic(t *testing.T) (*domainuser.LoginLogic, *postgres.FakeUserRepositor
 // TestLoginLogic_ValidCredentials_ReturnsTokenAndExpiry verifies AC1:
 // valid credentials produce a non-empty token and a future expiry time.
 func TestLoginLogic_ValidCredentials_ReturnsTokenAndExpiry(t *testing.T) {
-	logic, _ := newLogic(t)
+	logic, _ := loginLogicFactory(t)
 
 	result, err := logic.Login(context.Background(), testEmail, testPassword)
 
@@ -65,7 +65,7 @@ func TestLoginLogic_ValidCredentials_ReturnsTokenAndExpiry(t *testing.T) {
 // TestLoginLogic_ValidCredentials_IsCaseInsensitive verifies that email lookup
 // is case-insensitive: "USER@EXAMPLE.COM" finds the "user@example.com" record.
 func TestLoginLogic_ValidCredentials_IsCaseInsensitive(t *testing.T) {
-	logic, _ := newLogic(t)
+	logic, _ := loginLogicFactory(t)
 
 	result, err := logic.Login(context.Background(), "USER@EXAMPLE.COM", testPassword)
 
@@ -76,7 +76,7 @@ func TestLoginLogic_ValidCredentials_IsCaseInsensitive(t *testing.T) {
 // TestLoginLogic_UserNotFound_ReturnsInvalidCredentials verifies AC3:
 // a non-existent email produces the same generic error as a wrong password.
 func TestLoginLogic_UserNotFound_ReturnsInvalidCredentials(t *testing.T) {
-	logic, _ := newLogic(t)
+	logic, _ := loginLogicFactory(t)
 
 	_, err := logic.Login(context.Background(), "nobody@example.com", testPassword)
 
@@ -88,7 +88,7 @@ func TestLoginLogic_UserNotFound_ReturnsInvalidCredentials(t *testing.T) {
 // TestLoginLogic_WrongPassword_ReturnsInvalidCredentials verifies AC2 and AC5:
 // wrong password produces the same generic error as a missing user.
 func TestLoginLogic_WrongPassword_ReturnsInvalidCredentials(t *testing.T) {
-	logic, _ := newLogic(t)
+	logic, _ := loginLogicFactory(t)
 
 	_, err := logic.Login(context.Background(), testEmail, "wrong-password")
 
@@ -100,7 +100,7 @@ func TestLoginLogic_WrongPassword_ReturnsInvalidCredentials(t *testing.T) {
 // TestLoginLogic_RepoInfraError_PropagatesError verifies that a non-auth repository
 // error (e.g., DB down) is propagated to the caller, not swallowed.
 func TestLoginLogic_RepoInfraError_PropagatesError(t *testing.T) {
-	logic, repo := newLogic(t)
+	logic, repo := loginLogicFactory(t)
 	infraErr := errors.New("connection refused")
 	repo.SetError(infraErr)
 
@@ -122,7 +122,7 @@ func (s *stubHasher) Verify(_ context.Context, _, _ string) (bool, error) {
 
 type stubTokenIssuer struct{ err error }
 
-func (s *stubTokenIssuer) Issue(_ context.Context, _ uuid.UUID, _ time.Duration) (string, error) {
+func (s *stubTokenIssuer) Issue(_ context.Context, _ uuid.UUID, _ time.Time) (string, error) {
 	return "", s.err
 }
 

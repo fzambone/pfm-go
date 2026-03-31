@@ -31,7 +31,7 @@ func TestFakeTokenService_Issue_ThenValidate_ReturnsUserID(t *testing.T) {
 	svc := authadapter.NewFakeTokenService(clk)
 	ctx := context.Background()
 
-	token, err := svc.Issue(ctx, testUserID, time.Hour)
+	token, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 	assert.NotEmpty(t, token)
 
@@ -47,7 +47,7 @@ func TestFakeTokenService_Validate_ExpiredToken_ReturnsErrTokenExpired(t *testin
 	svc := authadapter.NewFakeTokenService(clk)
 	ctx := context.Background()
 
-	token, err := svc.Issue(ctx, testUserID, time.Hour)
+	token, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
 	// Advance clock past expiry.
@@ -78,10 +78,10 @@ func TestFakeTokenService_Issue_DifferentUsersProduceDifferentTokens(t *testing.
 	userA := uuid.MustParse("00000000-0000-0000-0000-000000000001")
 	userB := uuid.MustParse("00000000-0000-0000-0000-000000000002")
 
-	tokenA, err := svc.Issue(ctx, userA, time.Hour)
+	tokenA, err := svc.Issue(ctx, userA, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
-	tokenB, err := svc.Issue(ctx, userB, time.Hour)
+	tokenB, err := svc.Issue(ctx, userB, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
 	assert.NotEqual(t, tokenA, tokenB)
@@ -102,10 +102,10 @@ func TestFakeTokenService_Issue_SameUserProducesUniqueTokens(t *testing.T) {
 	svc := authadapter.NewFakeTokenService(clk)
 	ctx := context.Background()
 
-	t1, err := svc.Issue(ctx, testUserID, time.Hour)
+	t1, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
-	t2, err := svc.Issue(ctx, testUserID, time.Hour)
+	t2, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
 	assert.NotEqual(t, t1, t2, "each Issue call must produce a unique token")
@@ -126,13 +126,13 @@ func TestFakeTokenService_Validate_TokenNotRenewable(t *testing.T) {
 	svc := authadapter.NewFakeTokenService(clk)
 	ctx := context.Background()
 
-	oldToken, err := svc.Issue(ctx, testUserID, time.Hour)
+	oldToken, err := svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
 	clk.Advance(2 * time.Hour)
 
 	// Issue a new token (which is valid); old token must still be expired.
-	_, err = svc.Issue(ctx, testUserID, time.Hour)
+	_, err = svc.Issue(ctx, testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
 	_, err = svc.Validate(ctx, oldToken)

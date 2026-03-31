@@ -11,9 +11,11 @@ import (
 // Tokens are self-contained: they carry the user ID and expiration so no
 // server-side session storage is required.
 type TokenService interface {
-	// Issue creates a signed token for userID that expires after expiresIn.
+	// Issue creates a signed token for userID that expires at expiresAt.
 	// The token includes issued-at, not-before, and expiration claims.
-	Issue(ctx context.Context, userID uuid.UUID, expiresIn time.Duration) (string, error)
+	// The caller computes the absolute expiry so the token and the returned
+	// LoginResult.ExpiresAt are guaranteed to be consistent.
+	Issue(ctx context.Context, userID uuid.UUID, expiresAt time.Time) (string, error)
 
 	// Validate verifies the token signature and expiration, returning the
 	// embedded userID on success. Returns ErrTokenExpired or ErrTokenInvalid
