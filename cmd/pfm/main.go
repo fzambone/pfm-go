@@ -16,6 +16,10 @@ import (
 	pfmhttp "github.com/zambone/pfm-go/internal/adapter/http"
 	authadapter "github.com/zambone/pfm-go/internal/adapter/auth"
 	pgadapter "github.com/zambone/pfm-go/internal/adapter/postgres"
+	domainaccount "github.com/zambone/pfm-go/internal/domain/account"
+	domaincreditcard "github.com/zambone/pfm-go/internal/domain/creditcard"
+	domainhousehold "github.com/zambone/pfm-go/internal/domain/household"
+	domainledger "github.com/zambone/pfm-go/internal/domain/ledger"
 	domainuser "github.com/zambone/pfm-go/internal/domain/user"
 	"github.com/zambone/pfm-go/internal/message"
 	"github.com/zambone/pfm-go/internal/platform/clock"
@@ -90,29 +94,87 @@ func run() error {
 		return fmt.Errorf(message.ErrDBNewPool, err)
 	}
 
-	// Auth wiring.
-	userRepo := pgadapter.NewUserRepo(pool)
-	hasher := authadapter.NewArgon2idHasher(authadapter.DefaultArgon2idParams())
+	// --- Dependency wiring ---
 	realClock := clock.NewRealClock()
+	hasher := authadapter.NewArgon2idHasher(authadapter.DefaultArgon2idParams())
 	tokenSvc, err := authadapter.NewPasetoTokenService(cfg.TokenSecretKey, realClock)
 	if err != nil {
 		return fmt.Errorf(message.ErrRunTokenKey, err)
 	}
+	transactor := database.NewPostgresTransactor(pool)
+
+	// Repositories.
+	userRepo := pgadapter.NewUserRepo(pool)
+	householdRepo := pgadapter.NewHouseholdRepo(pool)
+	accountRepo := pgadapter.NewAccountRepo(pool)
+	ccSettingsRepo := pgadapter.NewCreditCardSettingsRepo(pool)
+	ledgerRepo := pgadapter.NewLedgerRepo(pool)
+
+	// Domain logic.
+	userLogic := domainuser.NewUserLogic(userRepo, hasher, realClock)
 	loginLogic := domainuser.NewLoginLogic(
-		userRepo,
-		hasher,
-		tokenSvc,
-		realClock,
+		userRepo, hasher, tokenSvc, realClock,
 		time.Duration(cfg.TokenExpirationSec)*time.Second,
 	)
+	householdLogic := domainhousehold.NewHouseholdLogic(householdRepo, transactor, realClock)
+	accountLogic := domainaccount.NewAccountLogic(accountRepo, realClock)
+	ccSettingsLogic := domaincreditcard.NewSettingsLogic(
+		ccSettingsRepo,
+		pfmhttp.NewAccountTypeFinder(accountRepo),
+		realClock,
+	)
+	ledgerLogic := domainledger.NewLedgerLogic(ledgerRepo, transactor, realClock)
+
+	// Thin adapters for middleware.
+	membershipFinder := pfmhttp.NewMembershipRoleFinder(householdRepo)
 
 	var shuttingDown atomic.Bool
 
 	mux := http.NewServeMux()
-	mux.Handle("GET /healthz", pfmhttp.HealthHandler(Version))
-	mux.Handle("GET /health/live", pfmhttp.LiveHandler())
-	mux.Handle("GET /health/ready", pfmhttp.ReadyHandler(&shuttingDown))
-	mux.Handle("POST /auth/login", pfmhttp.LoginHandler(loginLogic))
+	pfmhttp.RegisterRoutes(mux, pfmhttp.RouteDeps{
+		Version:        Version,
+		ShuttingDown:   &shuttingDown,
+		TokenValidator: tokenSvc,
+		MembershipFinder: membershipFinder,
+
+		// User
+		LoginSvc:          loginLogic,
+		RegisterSvc:       userLogic,
+		GetUserSvc:        userLogic,
+		UpdateProfileSvc:  userLogic,
+		ChangePasswordSvc: userLogic,
+		DeactivateUserSvc: userLogic,
+
+		// Household
+		CreateHouseholdSvc:     householdLogic,
+		GetHouseholdSvc:        householdLogic,
+		ListHouseholdsSvc:      householdLogic,
+		AddMemberSvc:           householdLogic,
+		RemoveMemberSvc:        householdLogic,
+		UpdateHouseholdNameSvc: householdLogic,
+		DeactivateHouseholdSvc: householdLogic,
+
+		// Account
+		CreateAccountSvc:        accountLogic,
+		GetAccountSvc:           accountLogic,
+		ListAccountsSvc:         accountLogic,
+		UpdateAccountNameSvc:    accountLogic,
+		UpdateAccountBalanceSvc: accountLogic,
+		DeactivateAccountSvc:    accountLogic,
+
+		// Credit Card Settings
+		CreateCCSettingsSvc:  ccSettingsLogic,
+		GetCCSettingsSvc:     ccSettingsLogic,
+		UpdateClosingDaySvc:  ccSettingsLogic,
+		UpdateDueDaySvc:      ccSettingsLogic,
+		UpdateCreditLimitSvc: ccSettingsLogic,
+		DeleteCCSettingsSvc:  ccSettingsLogic,
+
+		// Ledger
+		PostTransactionSvc:       ledgerLogic,
+		GetBalanceSvc:            ledgerLogic,
+		GetTransactionHistorySvc: ledgerLogic,
+	})
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.HTTPPort),
