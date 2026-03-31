@@ -54,6 +54,19 @@ type createCCSettingsRequest struct {
 // CreateCreditCardSettingsHandler returns an http.HandlerFunc that creates credit card
 // settings for an account. The account ID is read from path parameter "account_id".
 // Panics if svc is nil.
+//
+// @Summary Create credit card settings
+// @Tags credit-card-settings
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param account_id path string true "Account ID (UUID)"
+// @Param body body createCCSettingsRequest true "Settings input"
+// @Success 201 {object} settingsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings [post]
 func CreateCreditCardSettingsHandler(svc createCCSettingsService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: CreateCreditCardSettingsHandler requires non-nil createCCSettingsService")
@@ -96,6 +109,17 @@ type getCCSettingsService interface {
 
 // GetCreditCardSettingsHandler returns an http.HandlerFunc that retrieves credit card
 // settings by account ID. Panics if svc is nil.
+//
+// @Summary Get credit card settings
+// @Tags credit-card-settings
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param account_id path string true "Account ID (UUID)"
+// @Success 200 {object} settingsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings [get]
 func GetCreditCardSettingsHandler(svc getCCSettingsService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: GetCreditCardSettingsHandler requires non-nil getCCSettingsService")
@@ -131,6 +155,19 @@ type updateClosingDayRequest struct {
 
 // UpdateClosingDayHandler returns an http.HandlerFunc that updates the billing cycle
 // closing day for credit card settings. Panics if svc is nil.
+//
+// @Summary Update closing day
+// @Tags credit-card-settings
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param account_id path string true "Account ID (UUID)"
+// @Param body body updateClosingDayRequest true "Closing day input"
+// @Success 200 {object} settingsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings/closing-day [put]
 func UpdateClosingDayHandler(svc updateClosingDayService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: UpdateClosingDayHandler requires non-nil updateClosingDayService")
@@ -176,6 +213,19 @@ type updateDueDayRequest struct {
 
 // UpdateDueDayHandler returns an http.HandlerFunc that updates the payment due day
 // for credit card settings. Panics if svc is nil.
+//
+// @Summary Update due day
+// @Tags credit-card-settings
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param account_id path string true "Account ID (UUID)"
+// @Param body body updateDueDayRequest true "Due day input"
+// @Success 200 {object} settingsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings/due-day [put]
 func UpdateDueDayHandler(svc updateDueDayService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: UpdateDueDayHandler requires non-nil updateDueDayService")
@@ -221,6 +271,19 @@ type updateCreditLimitRequest struct {
 
 // UpdateCreditLimitHandler returns an http.HandlerFunc that updates the credit limit.
 // Panics if svc is nil.
+//
+// @Summary Update credit limit
+// @Tags credit-card-settings
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param account_id path string true "Account ID (UUID)"
+// @Param body body updateCreditLimitRequest true "Limit input"
+// @Success 200 {object} settingsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings/limit [put]
 func UpdateCreditLimitHandler(svc updateCreditLimitService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: UpdateCreditLimitHandler requires non-nil updateCreditLimitService")
@@ -261,6 +324,16 @@ type deleteCCSettingsService interface {
 
 // DeleteCreditCardSettingsHandler returns an http.HandlerFunc that removes credit card
 // settings from an account. Panics if svc is nil.
+//
+// @Summary Delete credit card settings
+// @Tags credit-card-settings
+// @Param household_id path string true "Household ID (UUID)"
+// @Param account_id path string true "Account ID (UUID)"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings [delete]
 func DeleteCreditCardSettingsHandler(svc deleteCCSettingsService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: DeleteCreditCardSettingsHandler requires non-nil deleteCCSettingsService")

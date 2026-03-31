@@ -1,0 +1,1287 @@
+basePath: /
+definitions:
+  http.accountResponse:
+    properties:
+      account_type:
+        type: string
+      balance:
+        type: integer
+      created_at:
+        type: string
+      currency_code:
+        type: string
+      household_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      version:
+        type: integer
+    type: object
+  http.addMemberRequest:
+    properties:
+      role:
+        type: string
+      user_id:
+        type: string
+    type: object
+  http.balanceResponse:
+    properties:
+      account_id:
+        type: string
+      balance:
+        type: integer
+    type: object
+  http.changePasswordRequest:
+    properties:
+      new_password:
+        type: string
+      old_password:
+        type: string
+      version:
+        type: integer
+    type: object
+  http.createAccountRequest:
+    properties:
+      account_type:
+        type: string
+      currency_code:
+        type: string
+      name:
+        type: string
+    type: object
+  http.createCCSettingsRequest:
+    properties:
+      closing_day:
+        type: integer
+      due_day:
+        type: integer
+      limit_amount:
+        type: integer
+    type: object
+  http.createHouseholdRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  http.entryInputRequest:
+    properties:
+      account_id:
+        type: string
+      amount:
+        type: integer
+      entry_type:
+        type: string
+    type: object
+  http.entryResponse:
+    properties:
+      account_id:
+        type: string
+      amount:
+        type: integer
+      created_at:
+        type: string
+      entry_type:
+        type: string
+      id:
+        type: string
+      transaction_id:
+        type: string
+    type: object
+  http.householdResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      version:
+        type: integer
+    type: object
+  http.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  http.loginResponse:
+    properties:
+      expires_at:
+        description: RFC 3339 UTC
+        type: string
+      token:
+        type: string
+    type: object
+  http.membershipResponse:
+    properties:
+      household_id:
+        type: string
+      invited_by:
+        type: string
+      joined_at:
+        type: string
+      role:
+        type: string
+      user_id:
+        type: string
+    type: object
+  http.postTransactionRequest:
+    properties:
+      description:
+        type: string
+      entries:
+        items:
+          $ref: '#/definitions/http.entryInputRequest'
+        type: array
+      transaction_date:
+        description: YYYY-MM-DD
+        type: string
+    type: object
+  http.registerRequest:
+    properties:
+      display_name:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  http.settingsResponse:
+    properties:
+      account_id:
+        type: string
+      closing_day:
+        type: integer
+      created_at:
+        type: string
+      due_day:
+        type: integer
+      id:
+        type: string
+      limit_amount:
+        type: integer
+      updated_at:
+        type: string
+      version:
+        type: integer
+    type: object
+  http.transactionResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      entries:
+        items:
+          $ref: '#/definitions/http.entryResponse'
+        type: array
+      household_id:
+        type: string
+      id:
+        type: string
+      transaction_date:
+        type: string
+    type: object
+  http.updateAccountBalanceRequest:
+    properties:
+      balance:
+        type: integer
+      version:
+        type: integer
+    type: object
+  http.updateAccountNameRequest:
+    properties:
+      name:
+        type: string
+      version:
+        type: integer
+    type: object
+  http.updateClosingDayRequest:
+    properties:
+      closing_day:
+        type: integer
+      version:
+        type: integer
+    type: object
+  http.updateCreditLimitRequest:
+    properties:
+      limit_amount:
+        type: integer
+      version:
+        type: integer
+    type: object
+  http.updateDueDayRequest:
+    properties:
+      due_day:
+        type: integer
+      version:
+        type: integer
+    type: object
+  http.updateHouseholdNameRequest:
+    properties:
+      name:
+        type: string
+      version:
+        type: integer
+    type: object
+  http.updateProfileRequest:
+    properties:
+      display_name:
+        type: string
+      version:
+        type: integer
+    type: object
+  http.userResponse:
+    properties:
+      created_at:
+        type: string
+      display_name:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      version:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: Personal Financial Manager REST API — double-entry accounting for households.
+  title: PFM-Go API
+  version: "1.0"
+paths:
+  /api/v1/households:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.householdResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List households for the authenticated user
+      tags:
+      - households
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.createHouseholdRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.householdResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a household
+      tags:
+      - households
+  /api/v1/households/{household_id}:
+    delete:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Deactivate a household
+      tags:
+      - households
+    get:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.householdResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get household by ID
+      tags:
+      - households
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Name update input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.updateHouseholdNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.householdResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update household name
+      tags:
+      - households
+  /api/v1/households/{household_id}/accounts:
+    get:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.accountResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List accounts for a household
+      tags:
+      - accounts
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.createAccountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.accountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create an account
+      tags:
+      - accounts
+  /api/v1/households/{household_id}/accounts/{account_id}/balance:
+    get:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: account_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.balanceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get account balance
+      tags:
+      - ledger
+  /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings:
+    delete:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: account_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete credit card settings
+      tags:
+      - credit-card-settings
+    get:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: account_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.settingsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get credit card settings
+      tags:
+      - credit-card-settings
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: account_id
+        required: true
+        type: string
+      - description: Settings input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.createCCSettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.settingsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create credit card settings
+      tags:
+      - credit-card-settings
+  /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings/closing-day:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: account_id
+        required: true
+        type: string
+      - description: Closing day input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.updateClosingDayRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.settingsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update closing day
+      tags:
+      - credit-card-settings
+  /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings/due-day:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: account_id
+        required: true
+        type: string
+      - description: Due day input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.updateDueDayRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.settingsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update due day
+      tags:
+      - credit-card-settings
+  /api/v1/households/{household_id}/accounts/{account_id}/credit-card-settings/limit:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: account_id
+        required: true
+        type: string
+      - description: Limit input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.updateCreditLimitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.settingsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update credit limit
+      tags:
+      - credit-card-settings
+  /api/v1/households/{household_id}/accounts/{id}:
+    delete:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Deactivate an account
+      tags:
+      - accounts
+    get:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.accountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get account by ID
+      tags:
+      - accounts
+  /api/v1/households/{household_id}/accounts/{id}/balance:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Balance update input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.updateAccountBalanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.accountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update account balance
+      tags:
+      - accounts
+  /api/v1/households/{household_id}/accounts/{id}/name:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Account ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Name update input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.updateAccountNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.accountResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update account name
+      tags:
+      - accounts
+  /api/v1/households/{household_id}/members:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Member input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.addMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.membershipResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add a member to a household
+      tags:
+      - members
+  /api/v1/households/{household_id}/members/{user_id}:
+    delete:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: User ID to remove (UUID)
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove a member from a household
+      tags:
+      - members
+  /api/v1/households/{household_id}/transactions:
+    get:
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Filter by account ID (UUID)
+        in: query
+        name: account_id
+        type: string
+      - description: Max results
+        in: query
+        name: limit
+        type: integer
+      - description: Skip results
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/http.transactionResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get transaction history
+      tags:
+      - ledger
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Household ID (UUID)
+        in: path
+        name: household_id
+        required: true
+        type: string
+      - description: Transaction with entries
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.postTransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.transactionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "422":
+          description: Unprocessable Entity
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Post a balanced transaction
+      tags:
+      - ledger
+  /api/v1/users:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/http.userResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - users
+  /api/v1/users/{id}:
+    delete:
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Deactivate a user
+      tags:
+      - users
+    get:
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.userResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Profile update input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.updateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.userResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update user profile
+      tags:
+      - users
+  /api/v1/users/{id}/password:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Password change input
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.changePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.userResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change user password
+      tags:
+      - users
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/http.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.loginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Authenticate and obtain a token
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    description: Enter "Bearer {token}" (obtained from POST /auth/login).
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

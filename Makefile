@@ -77,8 +77,9 @@ coverage: ## Run unit tests with coverage report and enforce COVERAGE_THRESHOLD 
 	    exit 1; \
 	  fi
 
-generate: ## Regenerate type-safe Go code from db/queries/ using sqlc (requires queries to exist)
+generate: ## Regenerate sqlc Go code and OpenAPI spec from handler annotations
 	$(GOBIN)/sqlc generate
+	$(GOBIN)/swag init -g cmd/pfm/main.go --output api/ --outputTypes yaml
 
 vuln: ## Run govulncheck vulnerability scan
 	$(GOBIN)/govulncheck ./...

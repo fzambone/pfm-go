@@ -87,6 +87,10 @@ func RegisterRoutes(mux *http.ServeMux, d RouteDeps) {
 	mux.Handle("GET /health/live", LiveHandler())
 	mux.Handle("GET /health/ready", ReadyHandler(d.ShuttingDown))
 
+	// --- Docs (public) ---
+	mux.Handle("GET /docs", DocsHandler())
+	mux.Handle("GET /api/v1/openapi.yaml", OpenAPIHandler())
+
 	// --- Auth (public) ---
 	mux.Handle("POST /auth/login", LoginHandler(d.LoginSvc))
 

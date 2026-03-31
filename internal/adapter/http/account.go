@@ -60,6 +60,18 @@ type createAccountRequest struct {
 // CreateAccountHandler returns an http.HandlerFunc that creates a new account
 // within a household. The household ID is read from path parameter "household_id".
 // Panics if svc is nil.
+//
+// @Summary Create an account
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param body body createAccountRequest true "Account input"
+// @Success 201 {object} accountResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts [post]
 func CreateAccountHandler(svc createAccountService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: CreateAccountHandler requires non-nil createAccountService")
@@ -103,6 +115,17 @@ type getAccountService interface {
 
 // GetAccountHandler returns an http.HandlerFunc that retrieves an account by ID.
 // Panics if svc is nil.
+//
+// @Summary Get account by ID
+// @Tags accounts
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param id path string true "Account ID (UUID)"
+// @Success 200 {object} accountResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{id} [get]
 func GetAccountHandler(svc getAccountService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: GetAccountHandler requires non-nil getAccountService")
@@ -133,6 +156,14 @@ type listAccountsService interface {
 
 // ListAccountsHandler returns an http.HandlerFunc that lists all active accounts
 // for a household. Panics if svc is nil.
+//
+// @Summary List accounts for a household
+// @Tags accounts
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Success 200 {array} accountResponse
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts [get]
 func ListAccountsHandler(svc listAccountsService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: ListAccountsHandler requires non-nil listAccountsService")
@@ -174,6 +205,19 @@ type updateAccountNameRequest struct {
 
 // UpdateAccountNameHandler returns an http.HandlerFunc that renames an account.
 // Panics if svc is nil.
+//
+// @Summary Update account name
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param id path string true "Account ID (UUID)"
+// @Param body body updateAccountNameRequest true "Name update input"
+// @Success 200 {object} accountResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{id}/name [put]
 func UpdateAccountNameHandler(svc updateAccountNameService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: UpdateAccountNameHandler requires non-nil updateAccountNameService")
@@ -219,6 +263,19 @@ type updateAccountBalanceRequest struct {
 
 // UpdateAccountBalanceHandler returns an http.HandlerFunc that updates an account balance.
 // Panics if svc is nil.
+//
+// @Summary Update account balance
+// @Tags accounts
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param id path string true "Account ID (UUID)"
+// @Param body body updateAccountBalanceRequest true "Balance update input"
+// @Success 200 {object} accountResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{id}/balance [put]
 func UpdateAccountBalanceHandler(svc updateAccountBalanceService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: UpdateAccountBalanceHandler requires non-nil updateAccountBalanceService")
@@ -259,6 +316,17 @@ type deactivateAccountService interface {
 
 // DeactivateAccountHandler returns an http.HandlerFunc that soft-deletes an account.
 // Panics if svc is nil.
+//
+// @Summary Deactivate an account
+// @Tags accounts
+// @Param household_id path string true "Household ID (UUID)"
+// @Param id path string true "Account ID (UUID)"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/accounts/{id} [delete]
 func DeactivateAccountHandler(svc deactivateAccountService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: DeactivateAccountHandler requires non-nil deactivateAccountService")

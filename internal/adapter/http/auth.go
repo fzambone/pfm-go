@@ -33,6 +33,16 @@ type loginResponse struct {
 // LoginHandler returns an http.HandlerFunc that handles POST /auth/login.
 // It decodes credentials from the request body, delegates to svc, and writes
 // a JSON response. Panics if svc is nil.
+//
+// @Summary Authenticate and obtain a token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body loginRequest true "Login credentials"
+// @Success 200 {object} loginResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /auth/login [post]
 func LoginHandler(svc loginService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: LoginHandler requires non-nil loginService")

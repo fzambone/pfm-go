@@ -85,6 +85,16 @@ type registerRequest struct {
 // RegisterHandler returns an http.HandlerFunc that handles user registration.
 // On success it writes a 201 Created response with the new user and a Location header.
 // Panics if svc is nil.
+//
+// @Summary Register a new user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param body body registerRequest true "Registration input"
+// @Success 201 {object} userResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Router /api/v1/users [post]
 func RegisterHandler(svc registerService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: RegisterHandler requires non-nil registerService")
@@ -124,6 +134,16 @@ type getUserService interface {
 
 // GetUserHandler returns an http.HandlerFunc that retrieves a user by ID.
 // The user ID is read from the URL path parameter "id". Panics if svc is nil.
+//
+// @Summary Get user by ID
+// @Tags users
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Success 200 {object} userResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/users/{id} [get]
 func GetUserHandler(svc getUserService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: GetUserHandler requires non-nil getUserService")
@@ -160,6 +180,19 @@ type changePasswordRequest struct {
 
 // ChangePasswordHandler returns an http.HandlerFunc that changes a user's password.
 // The user ID is read from the URL path parameter "id". Panics if svc is nil.
+//
+// @Summary Change user password
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Param body body changePasswordRequest true "Password change input"
+// @Success 200 {object} userResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/users/{id}/password [put]
 func ChangePasswordHandler(svc changePasswordService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: ChangePasswordHandler requires non-nil changePasswordService")
@@ -201,6 +234,15 @@ type deactivateUserService interface {
 
 // DeactivateUserHandler returns an http.HandlerFunc that soft-deletes a user.
 // The user ID is read from the URL path parameter "id". Panics if svc is nil.
+//
+// @Summary Deactivate a user
+// @Tags users
+// @Param id path string true "User ID (UUID)"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/users/{id} [delete]
 func DeactivateUserHandler(svc deactivateUserService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: DeactivateUserHandler requires non-nil deactivateUserService")
@@ -238,6 +280,18 @@ type updateProfileRequest struct {
 // UpdateProfileHandler returns an http.HandlerFunc that updates a user's profile.
 // The user ID is read from the URL path parameter "id". The caller ID is read from
 // the request context (set by authn middleware). Panics if svc is nil.
+//
+// @Summary Update user profile
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Param body body updateProfileRequest true "Profile update input"
+// @Success 200 {object} userResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/users/{id} [put]
 func UpdateProfileHandler(svc updateProfileService) http.HandlerFunc {
 	if svc == nil {
 		panic("http: UpdateProfileHandler requires non-nil updateProfileService")
