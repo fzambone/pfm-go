@@ -51,7 +51,7 @@ func NewPasetoTokenService(keyHex string, clk clock.Clock) (*PasetoTokenService,
 
 // Issue encrypts a new PASETO v4.local token containing the userID, iat, nbf,
 // and exp claims. Each call uses a fresh random nonce so tokens are unique.
-func (s *PasetoTokenService) Issue(ctx context.Context, userID uuid.UUID, expiresIn time.Duration) (string, error) {
+func (s *PasetoTokenService) Issue(ctx context.Context, userID uuid.UUID, expiresAt time.Time) (string, error) {
 	_, span := otel.Tracer("auth").Start(ctx, "PasetoTokenService.Issue")
 	defer span.End()
 
@@ -60,7 +60,7 @@ func (s *PasetoTokenService) Issue(ctx context.Context, userID uuid.UUID, expire
 	token.SetSubject(userID.String())
 	token.SetIssuedAt(now)
 	token.SetNotBefore(now)
-	token.SetExpiration(now.Add(expiresIn))
+	token.SetExpiration(expiresAt)
 
 	encrypted := token.V4Encrypt(s.key, nil)
 	span.SetStatus(codes.Ok, "")

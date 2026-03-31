@@ -53,7 +53,7 @@ func newSvc(t *testing.T) (*auth.FakeTokenService, string) {
 	t.Helper()
 	clk := clock.NewFakeClock(fixedTime)
 	svc := auth.NewFakeTokenService(clk)
-	token, err := svc.Issue(context.Background(), testUserID, time.Hour)
+	token, err := svc.Issue(context.Background(), testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 	return svc, token
 }
@@ -111,7 +111,7 @@ func TestAuthnMiddleware_InvalidToken_Returns401(t *testing.T) {
 func TestAuthnMiddleware_ExpiredToken_Returns401(t *testing.T) {
 	clk := clock.NewFakeClock(fixedTime)
 	svc := auth.NewFakeTokenService(clk)
-	token, err := svc.Issue(context.Background(), testUserID, time.Hour)
+	token, err := svc.Issue(context.Background(), testUserID, fixedTime.Add(time.Hour))
 	require.NoError(t, err)
 
 	// Advance clock past expiry.
@@ -192,7 +192,7 @@ func BenchmarkAuthnMiddleware_ValidRequest(b *testing.B) {
 	svc, token := func() (*auth.FakeTokenService, string) {
 		clk := clock.NewFakeClock(fixedTime)
 		svc := auth.NewFakeTokenService(clk)
-		tok, err := svc.Issue(context.Background(), testUserID, time.Hour)
+		tok, err := svc.Issue(context.Background(), testUserID, fixedTime.Add(time.Hour))
 		if err != nil {
 			b.Fatal(err)
 		}

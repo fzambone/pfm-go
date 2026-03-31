@@ -89,7 +89,7 @@ type passwordVerifier interface {
 // tokenIssuer abstracts token creation.
 // Structurally satisfied by port/auth.TokenService.
 type tokenIssuer interface {
-	Issue(ctx context.Context, userID uuid.UUID, expiresIn time.Duration) (string, error)
+	Issue(ctx context.Context, userID uuid.UUID, expiresAt time.Time) (string, error)
 }
 
 // clocker abstracts the current time.

@@ -80,13 +80,14 @@ func (l *LoginLogic) Login(ctx context.Context, email, password string) (LoginRe
 		return LoginResult{}, fmt.Errorf(message.ErrLoginVerifyPassword, message.ErrLoginInvalidCredentials)
 	}
 
-	token, err := l.tokens.Issue(ctx, u.ID, l.tokenTTL)
+	expiresAt := l.clk.Now().Add(l.tokenTTL)
+	token, err := l.tokens.Issue(ctx, u.ID, expiresAt)
 	if err != nil {
 		return LoginResult{}, fmt.Errorf(message.ErrLoginIssueToken, err)
 	}
 
 	return LoginResult{
 		Token:     token,
-		ExpiresAt: l.clk.Now().Add(l.tokenTTL),
+		ExpiresAt: expiresAt,
 	}, nil
 }

@@ -43,16 +43,16 @@ func NewFakeTokenService(clk clock.Clock) *FakeTokenService {
 	}
 }
 
-// Issue creates an opaque token for userID that expires after expiresIn.
+// Issue creates an opaque token for userID that expires at expiresAt.
 // Panics if called outside a test binary.
-func (f *FakeTokenService) Issue(_ context.Context, userID uuid.UUID, expiresIn time.Duration) (string, error) {
+func (f *FakeTokenService) Issue(_ context.Context, userID uuid.UUID, expiresAt time.Time) (string, error) {
 	if !testing.Testing() {
 		panic("FakeTokenService: not for production use — wire PasetoTokenService instead")
 	}
 	token := "fake-" + uuid.New().String()
 	entry := fakeTokenEntry{
 		userID:    userID,
-		expiresAt: f.clk.Now().Add(expiresIn),
+		expiresAt: expiresAt,
 	}
 	f.mu.Lock()
 	f.tokens[token] = entry

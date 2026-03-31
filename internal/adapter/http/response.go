@@ -34,9 +34,16 @@ func WriteNoContent(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// maxRequestBodyBytes is the maximum allowed size for JSON request bodies (1 MB).
+// Requests exceeding this limit are rejected before the full body is read into memory,
+// preventing denial-of-service via oversized payloads.
+const maxRequestBodyBytes = 1024 * 1024
+
 // DecodeBody reads the request body and decodes it as JSON into dst.
-// Returns an error if the body is empty or contains malformed JSON.
+// The body is limited to maxRequestBodyBytes to prevent oversized payloads.
+// Returns an error if the body is empty, exceeds the limit, or contains malformed JSON.
 func DecodeBody(r *http.Request, dst any) error {
+	r.Body = http.MaxBytesReader(nil, r.Body, maxRequestBodyBytes)
 	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
 		return fmt.Errorf("decode request body: %w", err)
 	}
