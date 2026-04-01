@@ -70,7 +70,7 @@ func (r *CreditCardSettingsRepo) Create(ctx context.Context, accountID uuid.UUID
 		UpdatedBy:   uuidToPgUUID(callerID),
 	})
 	if err != nil {
-		if isUniqueViolation(err, "credit_card_settings_account_id_key") {
+		if isUniqueViolation(err, "credit_card_settings_account_id_active_idx") {
 			err = fmt.Errorf(message.ErrCCSettingsCreate, message.ErrCreditCardSettingsExists)
 		} else {
 			err = fmt.Errorf(message.ErrCCSettingsCreate, err)
