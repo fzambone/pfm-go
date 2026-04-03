@@ -1,0 +1,32 @@
+# Fly.io application configuration for pfm-go-api.
+# Secrets (DATABASE_URL, TOKEN_SECRET_KEY) are set via `fly secrets set` — never here.
+
+app = 'pfm-go-api'
+primary_region = 'gru'
+
+[build]
+  dockerfile = 'deploy/docker/Dockerfile'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = '10s'
+    interval = '15s'
+    method = 'GET'
+    path = '/health/ready'
+    timeout = '5s'
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[env]
+  LOG_LEVEL = 'info'
+  DATABASE_SSL_MODE = 'require'
+  HTTP_PORT = '8080'

@@ -188,6 +188,31 @@ func TestConfig_StringDoesNotLeakPassword(t *testing.T) {
 	assert.Contains(t, cfg.String(), "****")
 }
 
+func TestLoad_DatabaseURL_EmptyByDefault(t *testing.T) {
+	cfg, err := config.Load()
+
+	assert.NoError(t, err)
+	assert.Empty(t, cfg.DatabaseURL)
+}
+
+func TestLoad_DatabaseURL_LoadedFromEnv(t *testing.T) {
+	url := "postgres://user:pass@host:5432/dbname?sslmode=require"
+	t.Setenv("DATABASE_URL", url)
+
+	cfg, err := config.Load()
+
+	assert.NoError(t, err)
+	assert.Equal(t, url, cfg.DatabaseURL)
+}
+
+func TestConfig_StringDoesNotLeakDatabaseURL(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://user:secret@host:5432/db")
+	cfg, err := config.Load()
+
+	assert.NoError(t, err)
+	assert.NotContains(t, cfg.String(), "secret")
+}
+
 func TestLoad_OTELEndpointHasNoDefault(t *testing.T) {
 	cfg, err := config.Load()
 

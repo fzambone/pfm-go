@@ -54,6 +54,10 @@ type Config struct {
 	TokenSecretKey string
 	// TokenExpirationSec is the token lifetime in seconds. Env: TOKEN_EXPIRATION_SEC. Default: 86400 (24 hours).
 	TokenExpirationSec int
+	// DatabaseURL is an optional full PostgreSQL connection URL. Env: DATABASE_URL.
+	// When set, it takes precedence over the individual DATABASE_HOST/PORT/USER/PASSWORD/NAME/SSL_MODE fields.
+	// Fly.io managed Postgres provides this as a single secret — use it instead of individual vars in production.
+	DatabaseURL string
 }
 
 // Load reads configuration from environment variables, applying defaults for local development.
@@ -143,20 +147,25 @@ func Load() (*Config, error) {
 		OTELEndpoint:           otelEndpoint,
 		TokenSecretKey:         os.Getenv("TOKEN_SECRET_KEY"),
 		TokenExpirationSec:     tokenExpirationSec,
+		DatabaseURL:            os.Getenv("DATABASE_URL"),
 	}
 
 	return cfg, nil
 }
 
 func (c *Config) String() string {
+	databaseURLDisplay := "<not set>"
+	if c.DatabaseURL != "" {
+		databaseURLDisplay = "****"
+	}
 	return fmt.Sprintf(
 		"HTTPPort=%d DatabaseHost=%s DatabasePort=%d DatabaseUser=%s DatabasePassword=**** "+
-			"DatabaseName=%s DatabaseSSLMode=%s DBMaxOpenConns=%d DBMaxIdleConns=%d DBConnMaxLifetimeSec=%d "+
+			"DatabaseName=%s DatabaseSSLMode=%s DatabaseURL=%s DBMaxOpenConns=%d DBMaxIdleConns=%d DBConnMaxLifetimeSec=%d "+
 			"DBConnMaxIdleTimeSec=%d DBConnectTimeoutSec=%d DBStartupRetries=%d DBStartupRetryDelaySec=%d "+
 			"ShutdownTimeoutSec=%d LogLevel=%s Debug=%t RequireOTEL=%t OTELEndpoint=%s "+
 			"TokenSecretKey=**** TokenExpirationSec=%d",
 		c.HTTPPort, c.DatabaseHost, c.DatabasePort, c.DatabaseUser,
-		c.DatabaseName, c.DatabaseSSLMode, c.DBMaxOpenConns, c.DBMaxIdleConns, c.DBConnMaxLifetimeSec,
+		c.DatabaseName, c.DatabaseSSLMode, databaseURLDisplay, c.DBMaxOpenConns, c.DBMaxIdleConns, c.DBConnMaxLifetimeSec,
 		c.DBConnMaxIdleTimeSec, c.DBConnectTimeoutSec, c.DBStartupRetries, c.DBStartupRetryDelaySec,
 		c.ShutdownTimeoutSec, c.LogLevel, c.Debug, c.RequireOTEL, c.OTELEndpoint,
 		c.TokenExpirationSec,
