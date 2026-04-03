@@ -19,7 +19,13 @@ type pinger interface {
 	PingContext(ctx context.Context) error
 }
 
+// buildDSN returns the PostgreSQL connection string. When DATABASE_URL is set it is
+// used as-is (Fly.io managed Postgres provides the full URL as a secret). Otherwise
+// the individual DATABASE_HOST/PORT/USER/PASSWORD/NAME/SSL_MODE fields are combined.
 func buildDSN(cfg *config.Config) string {
+	if cfg.DatabaseURL != "" {
+		return cfg.DatabaseURL
+	}
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=%s&connect_timeout=%d",
 		cfg.DatabaseUser,

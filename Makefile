@@ -90,7 +90,26 @@ lint: ## Run golangci-lint
 build: ## Build the application binary
 	go build -ldflags="-X main.Version=$$(git describe --tags --always --dirty) -X main.GitCommit=$$(git rev-parse --short HEAD) -X main.BuildTime=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o bin/pfm ./cmd/pfm/
 
-ci: lint coverage vuln test-integration build ## Run full CI gate (lint + coverage + vuln + integration tests + build)
+ci: ## Run full CI gate (lint + coverage + vuln + integration tests + build) — all steps run in parallel
+	@mkdir -p .ci-logs
+	@printf 'Running CI gate in parallel...\n'
+	@FAILED=0; \
+	$(MAKE) lint             > .ci-logs/lint.log          2>&1 & p1=$$!; \
+	$(MAKE) coverage         > .ci-logs/coverage.log      2>&1 & p2=$$!; \
+	$(MAKE) vuln             > .ci-logs/vuln.log          2>&1 & p3=$$!; \
+	$(MAKE) build            > .ci-logs/build.log         2>&1 & p4=$$!; \
+	$(MAKE) test-integration > .ci-logs/integration.log   2>&1 & p5=$$!; \
+	wait $$p1 && printf '  lint         ✓\n' || { printf '  lint         ✗\n'; FAILED=1; }; \
+	wait $$p2 && printf '  coverage     ✓\n' || { printf '  coverage     ✗\n'; FAILED=1; }; \
+	wait $$p3 && printf '  vuln         ✓\n' || { printf '  vuln         ✗\n'; FAILED=1; }; \
+	wait $$p4 && printf '  build        ✓\n' || { printf '  build        ✗\n'; FAILED=1; }; \
+	wait $$p5 && printf '  integration  ✓\n' || { printf '  integration  ✗\n'; FAILED=1; }; \
+	if [ $$FAILED -ne 0 ]; then \
+		printf '\nCI FAILED. Logs:\n'; \
+		for f in .ci-logs/*.log; do printf '\n── %s ──\n' "$$f"; cat "$$f"; done; \
+		exit 1; \
+	fi; \
+	printf '\nCI gate passed.\n'
 
 # Internal helpers for string manipulation in coverage target.
 comma := ,
