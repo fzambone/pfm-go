@@ -1,0 +1,727 @@
+{
+  "info": {
+    "_postman_id": "b3e7a1c2-4f8d-4e9b-9a3c-1d2e5f6a7b8c",
+    "name": "PFM-Go API",
+    "description": "Personal Financial Manager — double-entry accounting for households.\n\nBase URL: {{base_url}}\n\n## Quickstart workflow\n1. **Register** a user → `Users / Register`\n2. **Login** → token is auto-saved to `{{token}}`\n3. **Create Household** → `household_id` is auto-saved\n4. **Create Account** (x2 for double-entry) → `account_id` is auto-saved from the first\n5. **Post Transaction** → reference both account IDs in entries\n\n## Variables auto-populated by test scripts\n| Variable | Set by |\n|---|---|\n| `token` | Auth / Login |\n| `user_id` | Users / Register |\n| `household_id` | Households / Create Household |\n| `account_id` | Accounts / Create Account |\n\nSet `member_user_id` manually to the ID of a second registered user.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://pfm-go-api.fly.dev",
+      "type": "string",
+      "description": "Live production API"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "PASETO v4 bearer token — auto-populated by Auth/Login"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string",
+      "description": "Authenticated user ID — auto-populated by Users/Register"
+    },
+    {
+      "key": "household_id",
+      "value": "",
+      "type": "string",
+      "description": "Current household ID — auto-populated by Households/Create Household"
+    },
+    {
+      "key": "account_id",
+      "value": "",
+      "type": "string",
+      "description": "Primary account ID — auto-populated by Accounts/Create Account"
+    },
+    {
+      "key": "second_account_id",
+      "value": "",
+      "type": "string",
+      "description": "Second account ID for double-entry transactions — auto-populated by Accounts/Create Second Account"
+    },
+    {
+      "key": "member_user_id",
+      "value": "",
+      "type": "string",
+      "description": "User ID of a second user to add as household member — set manually"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "description": "Health check endpoints — no authentication required. Used by Fly.io readiness probes.",
+      "item": [
+        {
+          "name": "Liveness",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/live",
+              "host": ["{{base_url}}"],
+              "path": ["health", "live"]
+            },
+            "description": "Returns 200 if the process is alive."
+          }
+        },
+        {
+          "name": "Readiness",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health/ready",
+              "host": ["{{base_url}}"],
+              "path": ["health", "ready"]
+            },
+            "description": "Returns 200 when the database connection is established and the server is ready to serve traffic."
+          }
+        },
+        {
+          "name": "Healthz (combined)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/healthz",
+              "host": ["{{base_url}}"],
+              "path": ["healthz"]
+            },
+            "description": "Combined health check."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints. No bearer token required.",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('token', json.token);",
+                  "    console.log('Token saved. Expires at:', json.expires_at);",
+                  "} else {",
+                  "    console.error('Login failed:', pm.response.text());",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"supersecret123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate with email and password. The PASETO v4 token is automatically saved to `{{token}}` and used by all subsequent requests."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "User registration and profile management.\n\nRegistration is public. All other endpoints require authentication.",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('user_id', json.id);",
+                  "    console.log('User registered. ID:', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"Alice Costa\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"supersecret123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "description": "Register a new user. No authentication required. Returns 409 if email already exists.\n\nThe `user_id` is auto-saved to `{{user_id}}`."
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}"]
+            },
+            "description": "Fetch the authenticated user's profile by ID."
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"Alice Costa Silva\",\n  \"version\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}"]
+            },
+            "description": "Update the display name. `version` must match the current record version for optimistic concurrency control. Returns 409 on version conflict."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"old_password\": \"supersecret123\",\n  \"new_password\": \"newpassword456\",\n  \"version\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}/password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}", "password"]
+            },
+            "description": "Change password. Requires the current password for verification. Returns 401 if old_password is wrong."
+          }
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}"]
+            },
+            "description": "Soft-delete the user account. Returns 204 on success."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Households",
+      "description": "Household management. A household groups users and accounts together for shared financial tracking.",
+      "item": [
+        {
+          "name": "Create Household",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('household_id', json.id);",
+                  "    console.log('Household created. ID:', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Costa Family\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households"]
+            },
+            "description": "Create a new household. The authenticated user becomes its first owner. The `household_id` is auto-saved to `{{household_id}}`."
+          }
+        },
+        {
+          "name": "List Households",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households"]
+            },
+            "description": "List all households the authenticated user belongs to."
+          }
+        },
+        {
+          "name": "Get Household",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}"]
+            },
+            "description": "Fetch a single household by ID."
+          }
+        },
+        {
+          "name": "Update Household Name",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Costa Family Budget\",\n  \"version\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}"]
+            },
+            "description": "Rename a household. `version` must match the current record version. Returns 409 on conflict."
+          }
+        },
+        {
+          "name": "Deactivate Household",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}"]
+            },
+            "description": "Soft-delete a household. Returns 204 on success."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "description": "Add or remove members from a household. Set `{{member_user_id}}` to a second registered user's ID.",
+      "item": [
+        {
+          "name": "Add Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": \"{{member_user_id}}\",\n  \"role\": \"member\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/members",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "members"]
+            },
+            "description": "Add a user to a household. Set `{{member_user_id}}` to the target user's ID before sending. Returns 409 if already a member."
+          }
+        },
+        {
+          "name": "Remove Member",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/members/{{member_user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "members", "{{member_user_id}}"]
+            },
+            "description": "Remove a member from a household. Returns 204 on success. Returns 409 if the user is the last owner."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "description": "Account management within a household.\n\nAccount types: `checking`, `savings`, `credit_card`, `investment`, `cash`\nCurrency codes: `BRL`, `USD`, `EUR`\nAmounts are in minor units (centavos/cents). R$1,500.00 = 150000.",
+      "item": [
+        {
+          "name": "Create Account (Checking)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('account_id', json.id);",
+                  "    console.log('Account created. ID:', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nubank Checking\",\n  \"account_type\": \"checking\",\n  \"currency_code\": \"BRL\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts"]
+            },
+            "description": "Create a checking account. The `account_id` is auto-saved to `{{account_id}}`.\n\nCreate at least two accounts to post balanced double-entry transactions."
+          }
+        },
+        {
+          "name": "Create Account (Credit Card)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.collectionVariables.set('second_account_id', json.id);",
+                  "    console.log('Second account created. ID:', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nubank Credit Card\",\n  \"account_type\": \"credit_card\",\n  \"currency_code\": \"BRL\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts"]
+            },
+            "description": "Create a credit card account. The ID is auto-saved to `{{second_account_id}}`.\n\nAfter creating this account, go to Credit Card Settings to configure closing day, due day, and limit."
+          }
+        },
+        {
+          "name": "List Accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts"]
+            },
+            "description": "List all active accounts in the household."
+          }
+        },
+        {
+          "name": "Get Account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{account_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{account_id}}"]
+            },
+            "description": "Fetch a single account by ID."
+          }
+        },
+        {
+          "name": "Update Account Name",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nubank Conta Corrente\",\n  \"version\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{account_id}}/name",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{account_id}}", "name"]
+            },
+            "description": "Rename an account. `version` must match. Returns 409 on conflict."
+          }
+        },
+        {
+          "name": "Update Account Balance",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"balance\": 500000,\n  \"version\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{account_id}}/balance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{account_id}}", "balance"]
+            },
+            "description": "Set the account balance directly (e.g., for initial setup or reconciliation). Amount is in minor units: 500000 = R$5,000.00. Returns 409 on version conflict."
+          }
+        },
+        {
+          "name": "Deactivate Account",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{account_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{account_id}}"]
+            },
+            "description": "Soft-delete an account. Returns 204 on success."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Credit Card Settings",
+      "description": "Credit card configuration for accounts with `account_type: credit_card`.\n\nAll amounts in minor units (centavos). R$10,000.00 = 1000000.\nClosing day and due day are day-of-month integers (1–31).",
+      "item": [
+        {
+          "name": "Create CC Settings",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"closing_day\": 20,\n  \"due_day\": 5,\n  \"limit_amount\": 1000000\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{second_account_id}}/credit-card-settings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{second_account_id}}", "credit-card-settings"]
+            },
+            "description": "Create credit card settings for the account. Uses `{{second_account_id}}` (the credit card account). `limit_amount` is in minor units: 1000000 = R$10,000.00."
+          }
+        },
+        {
+          "name": "Get CC Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{second_account_id}}/credit-card-settings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{second_account_id}}", "credit-card-settings"]
+            },
+            "description": "Fetch the credit card settings for an account."
+          }
+        },
+        {
+          "name": "Update Closing Day",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"closing_day\": 15,\n  \"version\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{second_account_id}}/credit-card-settings/closing-day",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{second_account_id}}", "credit-card-settings", "closing-day"]
+            },
+            "description": "Update the invoice closing day (1–31). Returns 409 on version conflict."
+          }
+        },
+        {
+          "name": "Update Due Day",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"due_day\": 10,\n  \"version\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{second_account_id}}/credit-card-settings/due-day",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{second_account_id}}", "credit-card-settings", "due-day"]
+            },
+            "description": "Update the payment due day (1–31). Returns 409 on version conflict."
+          }
+        },
+        {
+          "name": "Update Credit Limit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"limit_amount\": 2000000,\n  \"version\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{second_account_id}}/credit-card-settings/limit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{second_account_id}}", "credit-card-settings", "limit"]
+            },
+            "description": "Update the credit limit. 2000000 = R$20,000.00. Returns 409 on version conflict."
+          }
+        },
+        {
+          "name": "Delete CC Settings",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{second_account_id}}/credit-card-settings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{second_account_id}}", "credit-card-settings"]
+            },
+            "description": "Delete the credit card settings. Returns 204 on success."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ledger",
+      "description": "Double-entry transaction posting and balance queries.\n\n**Double-entry rule:** Every transaction must have at least 2 entries where the sum of debits equals the sum of credits. The API will return 422 if the transaction is unbalanced.\n\n**Example — salary deposit:**\n- Debit `checking` account (money coming in) R$5,000.00\n- Credit `income` account (source of funds) R$5,000.00\n\n**Amounts** are in minor units (centavos). R$1,500.00 = 150000.",
+      "item": [
+        {
+          "name": "Post Transaction (salary deposit)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Salary — April 2026\",\n  \"transaction_date\": \"2026-04-01\",\n  \"entries\": [\n    {\n      \"account_id\": \"{{account_id}}\",\n      \"amount\": 500000,\n      \"entry_type\": \"debit\"\n    },\n    {\n      \"account_id\": \"{{second_account_id}}\",\n      \"amount\": 500000,\n      \"entry_type\": \"credit\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "transactions"]
+            },
+            "description": "Post a balanced transaction. Requires at least 2 entries where total debits = total credits.\n\nThis example moves R$5,000.00 from `{{second_account_id}}` to `{{account_id}}`. Replace entries with your actual account IDs and amounts.\n\nReturns 422 if entries don't balance."
+          }
+        },
+        {
+          "name": "List Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/transactions?limit=20&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "transactions"],
+              "query": [
+                { "key": "limit", "value": "20", "description": "Max number of transactions to return" },
+                { "key": "offset", "value": "0", "description": "Number of transactions to skip (for pagination)" },
+                { "key": "account_id", "value": "", "description": "Filter by account UUID (optional)", "disabled": true }
+              ]
+            },
+            "description": "Paginated list of transactions for the household. Filter by account using the `account_id` query param."
+          }
+        },
+        {
+          "name": "Get Account Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/households/{{household_id}}/accounts/{{account_id}}/balance",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "households", "{{household_id}}", "accounts", "{{account_id}}", "balance"]
+            },
+            "description": "Returns the running balance for the account derived from all posted ledger entries. Amount is in minor units."
+          }
+        }
+      ]
+    }
+  ]
+}
