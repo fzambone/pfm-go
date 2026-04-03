@@ -94,24 +94,48 @@ One paragraph: what this story delivers and why.
 
 ## Phase 4 — TDD Implementation
 
-Follow strict **RED → GREEN → REFACTOR** for every unit — both unit tests and integration tests.
+Follow strict **RED → GREEN → REFACTOR** for every unit. TDD applies to ALL issue types —
+including types-only and interface-only issues. The only exception is pure SQL migrations
+where tests are the CI pipeline applying the migration.
 
-### Two-tier TDD
+### TDD by issue type
 
-**Tier 1 — Unit tests** (fakes, `fstest.MapFS`, or other in-memory doubles):
-- Write the failing test first: `go test -run TestName ./internal/package/`
-- Confirm it compiles and fails (RED) before writing any production code.
-- Write the minimum production code to make it pass (GREEN).
-- Refactor, then move to the next unit.
+**Entity/type definitions:**
+- Write a test that references the not-yet-existing types (e.g. `var _ = account.Account{}`)
+- Confirm the test fails to compile (RED)
+- Write the types to make it compile and pass (GREEN)
 
-**Tier 2 — Integration tests** (testcontainers, real Postgres):
+**Port/interface definitions:**
+- Write a compile-time verification test with a stub struct satisfying the interface
+  (e.g. `var _ ledger.Repository = (*repoStub)(nil)`)
+- Confirm the test fails to compile (RED)
+- Write the interfaces to make it compile and pass (GREEN)
+
+**Test factories:**
+- Write tests that call the not-yet-existing factory functions
+- Confirm RED, then implement factories (GREEN)
+
+**Fakes:**
+- Write tests that call `NewFake...Repository()` and exercise each method
+- Confirm RED, then implement the fake (GREEN)
+
+**Business logic:**
+- Write the failing unit test first: `go test -run TestName ./internal/package/`
+- Confirm it compiles and fails (RED) before writing any production code
+- Write the minimum production code to make it pass (GREEN)
+- Refactor, then move to the next unit
+
+**Adapters (postgres repos):**
 - Tagged `//go:build integration`. Run with: `go test -tags integration -run TestName ./internal/package/`
-- Same RED → GREEN discipline: write the failing integration test first, confirm it fails, then implement.
-- Integration tests exercise real I/O (SQL, migrations, external services) — never substitute with fakes here.
+- Same RED → GREEN discipline: write the failing integration test first, confirm it fails, then implement
+- Integration tests exercise real I/O (SQL, migrations, external services) — never substitute with fakes
 
-Rules:
+### Rules
+
+- **NEVER write production code before a failing test.** This is non-negotiable for every
+  issue type. The test must exist and fail (compilation failure counts) before any `.go`
+  file without `_test.go` suffix is created or modified.
 - One unit at a time. Do not write the next test until the current one passes.
-- Never write production code without a failing test first — this applies to both tiers.
 - Follow the implementation order from Phase 3.
 
 ### Sequence

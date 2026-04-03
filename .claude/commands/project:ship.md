@@ -108,8 +108,6 @@ gh pr create --title "<type>(scope): description" --body "$(cat <<'EOF'
 - [ ] `/project:verify-issue` verdict: PASS
 - [ ] `/project:review` verdict: PASS (all 8 categories)
 - [ ] Integration tests pass with testcontainers
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
 ```
