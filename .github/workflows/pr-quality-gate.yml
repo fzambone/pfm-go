@@ -1,0 +1,45 @@
+# PR Quality Gate — runs on every PR against main and on every push to main.
+# Steps: lint → unit tests (no integration) → build.
+# All action versions are pinned; no `latest` references.
+
+name: PR Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: quality-gate
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          # Built-in module cache keyed on go.sum — avoids redundant downloads.
+          cache: true
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          # Pin to the same version used locally to prevent lint-drift between
+          # dev machines and CI.
+          version: v2.10.1
+
+      - name: Test
+        # Run unit tests only — integration tests require Docker and run in the
+        # merge-to-main gate (issue #156). No -tags integration here.
+        run: go test -race -count=1 ./...
+
+      - name: Build
+        run: make build
