@@ -60,6 +60,24 @@ type HouseholdMember struct {
 	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type LedgerEntry struct {
+	ID            uuid.UUID          `json:"id"`
+	TransactionID uuid.UUID          `json:"transaction_id"`
+	AccountID     uuid.UUID          `json:"account_id"`
+	EntryType     string             `json:"entry_type"`
+	Amount        int64              `json:"amount"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
+type Transaction struct {
+	ID              uuid.UUID          `json:"id"`
+	HouseholdID     uuid.UUID          `json:"household_id"`
+	Description     string             `json:"description"`
+	TransactionDate pgtype.Date        `json:"transaction_date"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	CreatedBy       pgtype.UUID        `json:"created_by"`
+}
+
 type User struct {
 	ID           uuid.UUID          `json:"id"`
 	Email        string             `json:"email"`
