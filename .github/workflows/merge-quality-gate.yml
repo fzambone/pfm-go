@@ -51,13 +51,6 @@ jobs:
       - name: Test (unit)
         run: go test -race -count=1 ./...
 
-      - name: Download integration modules
-        # testcontainers-go and its transitive deps are only pulled by integration
-        # build tags. The unit-test step above does not download them, so they
-        # would be fetched during the test run itself (adding latency). This step
-        # warms the module cache before compilation and test execution begins.
-        run: go mod download
-
       - name: Test (integration)
         env:
           TEST_DATABASE_URL: postgres://testuser:testpass@localhost:5432/postgres?sslmode=disable
