@@ -1,0 +1,50 @@
+# Merge-to-main full quality gate — triggers on every push to main (PR merge,
+# rebase, or admin direct push). Runs the complete suite: lint, unit tests,
+# integration tests (testcontainers-go + real Postgres), and build.
+# Deployment workflows may only trigger after this gate passes.
+# All action versions are pinned; no `latest` references.
+
+name: Merge Quality Gate
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  full-gate:
+    name: full-gate
+    runs-on: ubuntu-24.04
+    # Docker daemon is pre-installed on ubuntu-24.04 runners.
+    # testcontainers-go uses /var/run/docker.sock automatically.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.10.1
+
+      - name: Test (unit)
+        run: go test -race -count=1 ./...
+
+      - name: Test (integration)
+        # TESTCONTAINERS_RYUK_DISABLED prevents the Ryuk reaper container from
+        # starting. Ryuk can fail in GitHub Actions due to socket/permission
+        # restrictions; disabling it is the recommended workaround for CI.
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+        run: go test -tags integration -race -count=1 ./...
+
+      - name: Build
+        run: make build
