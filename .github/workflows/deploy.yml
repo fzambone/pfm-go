@@ -42,3 +42,34 @@ jobs:
         run: flyctl deploy --remote-only --wait-timeout 5m
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Smoke test
+        # Probe /health/ready on the live Fly.io URL to confirm the deployed
+        # binary is actually healthy. flyctl deploy --wait-timeout already waited
+        # for Fly.io's internal health check to pass, so the first attempt will
+        # almost always succeed. The 10-retry window (50 s total) absorbs edge
+        # cases: DNS propagation delay or a transient network blip between the
+        # GitHub Actions runner and Fly.io.
+        id: smoke
+        run: |
+          for i in $(seq 1 10); do
+            if curl -sf --max-time 10 https://pfm-go-api.fly.dev/health/ready; then
+              echo "Smoke test passed on attempt $i"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
+          echo "Smoke test failed after 10 attempts"
+          exit 1
+
+      - name: Rollback on smoke test failure
+        # Only runs when the smoke test specifically failed — not when Deploy
+        # itself failed (Fly.io already kept the old machine in that case).
+        # If the rollback command itself fails, the pipeline is still marked
+        # failed because the smoke test step already exited non-zero.
+        # Pipeline failure is the alert: GitHub notifies repo watchers by email.
+        if: failure() && steps.smoke.outcome == 'failure'
+        run: flyctl releases rollback
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
