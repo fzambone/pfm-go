@@ -31,6 +31,7 @@ func createHouseholdHelper(t *testing.T, env *e2eEnv, email, householdName strin
 // TestE2E_Household_Create_Success verifies AC1: creating a household returns 201
 // and the creator can access it (proving they're an ADMIN member).
 func TestE2E_Household_Create_Success(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "h1@example.com", "My House")
@@ -44,6 +45,7 @@ func TestE2E_Household_Create_Success(t *testing.T) {
 
 // TestE2E_Household_Create_ValidationError verifies AC2: empty name returns 400.
 func TestE2E_Household_Create_ValidationError(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _ := registerAndLogin(t, env, "h2@example.com", "User", "secret1234")
@@ -56,6 +58,7 @@ func TestE2E_Household_Create_ValidationError(t *testing.T) {
 
 // TestE2E_Household_GetByID verifies AC3: member retrieves household by ID.
 func TestE2E_Household_GetByID(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "h3@example.com", "Get House")
@@ -69,6 +72,7 @@ func TestE2E_Household_GetByID(t *testing.T) {
 
 // TestE2E_Household_List verifies AC4: list returns all households the user belongs to.
 func TestE2E_Household_List(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _ := registerAndLogin(t, env, "h4@example.com", "Lister", "secret1234")
@@ -85,6 +89,7 @@ func TestE2E_Household_List(t *testing.T) {
 
 // TestE2E_Household_List_Empty verifies AC5: user with no households gets [].
 func TestE2E_Household_List_Empty(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _ := registerAndLogin(t, env, "h5@example.com", "NoHouse", "secret1234")
@@ -97,6 +102,7 @@ func TestE2E_Household_List_Empty(t *testing.T) {
 
 // TestE2E_Household_UpdateName verifies AC6: admin renames with correct version.
 func TestE2E_Household_UpdateName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "h6@example.com", "Old Name")
@@ -112,6 +118,7 @@ func TestE2E_Household_UpdateName(t *testing.T) {
 
 // TestE2E_Household_UpdateName_StaleVersion verifies AC7: stale version returns 409.
 func TestE2E_Household_UpdateName_StaleVersion(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "h7@example.com", "Stale")
@@ -131,6 +138,7 @@ func TestE2E_Household_UpdateName_StaleVersion(t *testing.T) {
 // TestE2E_Household_AddMember verifies AC8: admin adds a member who can then
 // access the household.
 func TestE2E_Household_AddMember(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	tokenA, _, householdID := createHouseholdHelper(t, env, "admin@example.com", "Shared House")
@@ -151,6 +159,7 @@ func TestE2E_Household_AddMember(t *testing.T) {
 
 // TestE2E_Household_AddMember_Duplicate verifies AC9: adding existing member → 409.
 func TestE2E_Household_AddMember_Duplicate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	tokenA, _, householdID := createHouseholdHelper(t, env, "dup-admin@example.com", "DupHouse")
@@ -172,6 +181,7 @@ func TestE2E_Household_AddMember_Duplicate(t *testing.T) {
 // TestE2E_Household_RemoveMember verifies AC10: admin removes a member who then
 // cannot access the household.
 func TestE2E_Household_RemoveMember(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	tokenA, _, householdID := createHouseholdHelper(t, env, "rm-admin@example.com", "RmHouse")
@@ -191,6 +201,7 @@ func TestE2E_Household_RemoveMember(t *testing.T) {
 
 // TestE2E_Household_RemoveMember_LastAdmin verifies AC11: last admin removal rejected.
 func TestE2E_Household_RemoveMember_LastAdmin(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, userID, householdID := createHouseholdHelper(t, env, "last-admin@example.com", "LastAdmin")
@@ -202,6 +213,7 @@ func TestE2E_Household_RemoveMember_LastAdmin(t *testing.T) {
 // TestE2E_Household_Deactivate verifies AC12: deactivation returns 204 and
 // subsequent access returns 404.
 func TestE2E_Household_Deactivate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "deact@example.com", "DeactHouse")
@@ -216,6 +228,7 @@ func TestE2E_Household_Deactivate(t *testing.T) {
 // TestE2E_Household_NonAdminRejected verifies AC13: MEMBER cannot perform admin
 // operations (rename, deactivate, add/remove member).
 func TestE2E_Household_NonAdminRejected(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	tokenA, _, householdID := createHouseholdHelper(t, env, "admin-guard@example.com", "GuardHouse")
@@ -254,6 +267,7 @@ func TestE2E_Household_NonAdminRejected(t *testing.T) {
 // TestE2E_Household_AddSecondAdmin verifies edge case: admin adds another admin,
 // both can perform admin operations.
 func TestE2E_Household_AddSecondAdmin(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	tokenA, _, householdID := createHouseholdHelper(t, env, "admin1@example.com", "DualAdmin")
@@ -275,6 +289,7 @@ func TestE2E_Household_AddSecondAdmin(t *testing.T) {
 // TestE2E_Household_RemoveMember_NonExistent verifies edge case: removing a user
 // who is not a member is idempotent — returns 204 (domain treats it as a no-op).
 func TestE2E_Household_RemoveMember_NonExistent(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "rm-noop@example.com", "RmNoop")

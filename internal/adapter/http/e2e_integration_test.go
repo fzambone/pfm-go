@@ -6,21 +6,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 
-	pfmdb "github.com/zambone/pfm-go/db"
 	pfmhttp "github.com/zambone/pfm-go/internal/adapter/http"
 	authadapter "github.com/zambone/pfm-go/internal/adapter/auth"
 	pgadapter "github.com/zambone/pfm-go/internal/adapter/postgres"
@@ -30,7 +24,6 @@ import (
 	domainledger "github.com/zambone/pfm-go/internal/domain/ledger"
 	domainuser "github.com/zambone/pfm-go/internal/domain/user"
 	"github.com/zambone/pfm-go/internal/platform/clock"
-	"github.com/zambone/pfm-go/internal/platform/config"
 	"github.com/zambone/pfm-go/internal/platform/database"
 )
 
@@ -44,7 +37,7 @@ type e2eEnv struct {
 func newE2EEnv(t *testing.T, ctx context.Context) *e2eEnv {
 	t.Helper()
 
-	pool := newE2EPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	realClock := clock.NewRealClock()
 	hasher := authadapter.NewArgon2idHasher(authadapter.DefaultArgon2idParams())
 	// 32-byte hex-encoded key for PASETO token service (decodes to 32 bytes).
@@ -123,58 +116,6 @@ func newE2EEnv(t *testing.T, ctx context.Context) *e2eEnv {
 	return &e2eEnv{mux: mux}
 }
 
-// newE2EPool creates a testcontainers PostgreSQL instance with migrations applied.
-func newE2EPool(t *testing.T, ctx context.Context) *pgxpool.Pool {
-	t.Helper()
-
-	ctr, err := tcpostgres.Run(ctx,
-		"postgres:18-alpine3.23",
-		tcpostgres.WithDatabase("testdb"),
-		tcpostgres.WithUsername("testuser"),
-		tcpostgres.WithPassword("testpass"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2),
-		),
-	)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = ctr.Terminate(ctx) })
-
-	host, err := ctr.Host(ctx)
-	require.NoError(t, err)
-	mappedPort, err := ctr.MappedPort(ctx, "5432")
-	require.NoError(t, err)
-
-	cfg := &config.Config{
-		DatabaseHost:           host,
-		DatabasePort:           mappedPort.Int(),
-		DatabaseName:           "testdb",
-		DatabaseUser:           "testuser",
-		DatabasePassword:       "testpass",
-		DatabaseSSLMode:        "disable",
-		DBConnectTimeoutSec:    5,
-		DBStartupRetries:       3,
-		DBStartupRetryDelaySec: 1,
-		DBMaxOpenConns:         5,
-		DBMaxIdleConns:         2,
-		DBConnMaxLifetimeSec:   60,
-		DBConnMaxIdleTimeSec:   30,
-	}
-
-	sqlDB, err := database.Open(ctx, cfg)
-	require.NoError(t, err)
-	sub, err := fs.Sub(pfmdb.Migrations, "migrations")
-	require.NoError(t, err)
-	require.NoError(t, database.Migrate(ctx, sqlDB, sub))
-	require.NoError(t, sqlDB.Close())
-
-	pool, err := database.NewPool(ctx, cfg)
-	require.NoError(t, err)
-	t.Cleanup(pool.Close)
-
-	return pool
-}
-
 // do sends an HTTP request to the mux and returns the recorder.
 func (e *e2eEnv) do(t *testing.T, method, path string, body any, token string) *httptest.ResponseRecorder {
 	t.Helper()
@@ -208,6 +149,7 @@ func decodeJSON(t *testing.T, w *httptest.ResponseRecorder) map[string]any {
 // TestE2E_FullWorkflow verifies AC5 and AC6: a full register → login → create
 // household → create account → post transaction workflow against a real database.
 func TestE2E_FullWorkflow(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -299,6 +241,7 @@ func TestE2E_FullWorkflow(t *testing.T) {
 
 // TestE2E_UnauthenticatedRequest_Returns401 verifies AC2 against the full stack.
 func TestE2E_UnauthenticatedRequest_Returns401(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -309,6 +252,7 @@ func TestE2E_UnauthenticatedRequest_Returns401(t *testing.T) {
 // TestE2E_NonMemberAccess_Returns403 verifies AC3: a user who is not a member
 // of the household gets 403 Forbidden.
 func TestE2E_NonMemberAccess_Returns403(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 

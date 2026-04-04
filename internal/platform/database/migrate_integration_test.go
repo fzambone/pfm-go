@@ -22,6 +22,7 @@ func validMigrationFS() fstest.MapFS {
 }
 
 func TestMigrate_WhenNoMigrations_Succeeds(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 
@@ -31,6 +32,7 @@ func TestMigrate_WhenNoMigrations_Succeeds(t *testing.T) {
 }
 
 func TestMigrate_WhenMigrationsApplied_IsIdempotent(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	fs := validMigrationFS()
@@ -42,6 +44,7 @@ func TestMigrate_WhenMigrationsApplied_IsIdempotent(t *testing.T) {
 }
 
 func TestMigrate_WhenSingleMigrationApplied_TableExists(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 
@@ -56,6 +59,7 @@ func TestMigrate_WhenSingleMigrationApplied_TableExists(t *testing.T) {
 }
 
 func TestMigrate_WhenMigrationFails_ReturnsError(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	badFS := fstest.MapFS{

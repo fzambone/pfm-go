@@ -14,6 +14,7 @@ import (
 // TestPostgresTransactor_CommitsOnSuccess verifies AC1+AC2: when fn returns nil,
 // all changes made inside the atomic block are visible after the call.
 func TestPostgresTransactor_CommitsOnSuccess(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool := newTestPool(t, ctx)
 	tr := NewPostgresTransactor(pool)
@@ -41,6 +42,7 @@ func TestPostgresTransactor_CommitsOnSuccess(t *testing.T) {
 // TestPostgresTransactor_RollsBackOnError verifies AC3: when fn returns an error,
 // all changes made inside the atomic block are not visible after the call.
 func TestPostgresTransactor_RollsBackOnError(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool := newTestPool(t, ctx)
 	tr := NewPostgresTransactor(pool)
@@ -73,6 +75,7 @@ func TestPostgresTransactor_RollsBackOnError(t *testing.T) {
 // TestPostgresTransactor_RollsBackOnPanic verifies the panic edge case: when fn
 // panics, the transaction is rolled back and the panic is re-raised.
 func TestPostgresTransactor_RollsBackOnPanic(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool := newTestPool(t, ctx)
 	tr := NewPostgresTransactor(pool)
@@ -100,6 +103,7 @@ func TestPostgresTransactor_RollsBackOnPanic(t *testing.T) {
 // TestPostgresTransactor_RollsBackOnPanic_PreservesValue verifies that the panic
 // value is re-raised unchanged after rollback.
 func TestPostgresTransactor_RollsBackOnPanic_PreservesValue(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool := newTestPool(t, ctx)
 	tr := NewPostgresTransactor(pool)
@@ -123,6 +127,7 @@ func TestPostgresTransactor_RollsBackOnPanic_PreservesValue(t *testing.T) {
 // the outer transaction rather than starting a new one. Both inserts commit or roll back
 // together.
 func TestPostgresTransactor_NestedCallUsesOuterTransaction(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool := newTestPool(t, ctx)
 	tr := NewPostgresTransactor(pool)
@@ -163,6 +168,7 @@ func TestPostgresTransactor_NestedCallUsesOuterTransaction(t *testing.T) {
 // is rolled back (outer fn returns error), both outer and inner inserts are undone
 // even though the inner RunAtomic succeeded.
 func TestPostgresTransactor_NestedRollback(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool := newTestPool(t, ctx)
 	tr := NewPostgresTransactor(pool)
@@ -206,6 +212,7 @@ func TestPostgresTransactor_NestedRollback(t *testing.T) {
 // TestPostgresTransactor_DBTXFromContext_NoTx_UsesPool verifies AC4: outside an
 // atomic block, DBTXFromContext returns the pool (regular connection).
 func TestPostgresTransactor_DBTXFromContext_NoTx_UsesPool(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool := newTestPool(t, ctx)
 
@@ -221,6 +228,7 @@ func TestPostgresTransactor_DBTXFromContext_NoTx_UsesPool(t *testing.T) {
 // TestPostgresTransactor_DBTXFromContext_WithTx_UsesTx verifies AC5: inside an
 // atomic block, DBTXFromContext returns the transaction executor.
 func TestPostgresTransactor_DBTXFromContext_WithTx_UsesTx(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	pool := newTestPool(t, ctx)
 	tr := NewPostgresTransactor(pool)

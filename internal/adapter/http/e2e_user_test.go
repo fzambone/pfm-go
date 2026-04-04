@@ -41,6 +41,7 @@ func registerAndLogin(t *testing.T, env *e2eEnv, email, displayName, password st
 // TestE2E_User_Register_Success verifies AC1: registration returns the new user
 // with a server-assigned ID and the user can subsequently log in.
 func TestE2E_User_Register_Success(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -66,6 +67,7 @@ func TestE2E_User_Register_Success(t *testing.T) {
 
 // TestE2E_User_Register_DuplicateEmail verifies AC2: duplicate email returns 409.
 func TestE2E_User_Register_DuplicateEmail(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -83,6 +85,7 @@ func TestE2E_User_Register_DuplicateEmail(t *testing.T) {
 // TestE2E_User_Register_ValidationErrors verifies AC3: invalid fields return 400
 // with per-field violations.
 func TestE2E_User_Register_ValidationErrors(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -99,6 +102,7 @@ func TestE2E_User_Register_ValidationErrors(t *testing.T) {
 
 // TestE2E_User_Register_EmptyBody verifies edge case: empty body returns 400.
 func TestE2E_User_Register_EmptyBody(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -108,6 +112,7 @@ func TestE2E_User_Register_EmptyBody(t *testing.T) {
 
 // TestE2E_User_GetProfile verifies AC4: authenticated user retrieves profile by ID.
 func TestE2E_User_GetProfile(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, userID := registerAndLogin(t, env, "bob@example.com", "Bob", "secret1234")
@@ -123,6 +128,7 @@ func TestE2E_User_GetProfile(t *testing.T) {
 
 // TestE2E_User_GetProfile_NotFound verifies AC5: non-existent user returns 404.
 func TestE2E_User_GetProfile_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _ := registerAndLogin(t, env, "x@example.com", "XX", "secret1234")
@@ -133,6 +139,7 @@ func TestE2E_User_GetProfile_NotFound(t *testing.T) {
 
 // TestE2E_User_GetProfile_InvalidUUID verifies edge case: bad UUID returns 400.
 func TestE2E_User_GetProfile_InvalidUUID(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _ := registerAndLogin(t, env, "x@example.com", "XX", "secret1234")
@@ -144,6 +151,7 @@ func TestE2E_User_GetProfile_InvalidUUID(t *testing.T) {
 // TestE2E_User_UpdateProfile verifies AC6: update profile with correct version
 // returns updated user with incremented version.
 func TestE2E_User_UpdateProfile(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, userID := registerAndLogin(t, env, "carol@example.com", "Carol", "secret1234")
@@ -160,6 +168,7 @@ func TestE2E_User_UpdateProfile(t *testing.T) {
 
 // TestE2E_User_UpdateProfile_StaleVersion verifies AC7: stale version returns 409.
 func TestE2E_User_UpdateProfile_StaleVersion(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, userID := registerAndLogin(t, env, "dave@example.com", "Dave", "secret1234")
@@ -180,6 +189,7 @@ func TestE2E_User_UpdateProfile_StaleVersion(t *testing.T) {
 // TestE2E_User_ChangePassword verifies AC8: password change with correct old
 // password succeeds, and subsequent login uses new password.
 func TestE2E_User_ChangePassword(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, userID := registerAndLogin(t, env, "eve@example.com", "Eve", "oldpass1234")
@@ -204,6 +214,7 @@ func TestE2E_User_ChangePassword(t *testing.T) {
 
 // TestE2E_User_ChangePassword_WrongOldPassword verifies AC9: wrong old password returns 401.
 func TestE2E_User_ChangePassword_WrongOldPassword(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, userID := registerAndLogin(t, env, "frank@example.com", "Frank", "secret1234")
@@ -217,6 +228,7 @@ func TestE2E_User_ChangePassword_WrongOldPassword(t *testing.T) {
 // TestE2E_User_Deactivate verifies AC10: deactivation returns 204 and subsequent
 // requests for that user return 404.
 func TestE2E_User_Deactivate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, userID := registerAndLogin(t, env, "gone@example.com", "Gone", "secret1234")
@@ -231,6 +243,7 @@ func TestE2E_User_Deactivate(t *testing.T) {
 
 // TestE2E_User_Deactivate_CannotLogin verifies edge case: deactivated user cannot log in.
 func TestE2E_User_Deactivate_CannotLogin(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, userID := registerAndLogin(t, env, "byebye@example.com", "ByeBye", "secret1234")
@@ -248,6 +261,7 @@ func TestE2E_User_Deactivate_CannotLogin(t *testing.T) {
 // TestE2E_User_GetProfile_Unauthenticated verifies that accessing a user
 // profile without a token returns 401.
 func TestE2E_User_GetProfile_Unauthenticated(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 

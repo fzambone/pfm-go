@@ -37,8 +37,9 @@ func insertTestUser(t *testing.T, pool *pgxpool.Pool) uuid.UUID {
 // ---------------------------------------------------------------------------
 
 func TestHouseholdRepo_Create_StoresHouseholdAndMembership(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -62,8 +63,9 @@ func TestHouseholdRepo_Create_StoresHouseholdAndMembership(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHouseholdRepo_FindByID_ReturnsHousehold(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -78,8 +80,9 @@ func TestHouseholdRepo_FindByID_ReturnsHousehold(t *testing.T) {
 }
 
 func TestHouseholdRepo_FindByID_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 
 	_, err := repo.FindByID(ctx, uuid.MustParse("00000000-0000-0000-0000-000000000099"))
@@ -89,8 +92,9 @@ func TestHouseholdRepo_FindByID_NotFound(t *testing.T) {
 }
 
 func TestHouseholdRepo_FindByID_SoftDeleted_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -111,8 +115,9 @@ func TestHouseholdRepo_FindByID_SoftDeleted_NotFound(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHouseholdRepo_ListForUser_ReturnsUserHouseholds(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -128,8 +133,9 @@ func TestHouseholdRepo_ListForUser_ReturnsUserHouseholds(t *testing.T) {
 }
 
 func TestHouseholdRepo_ListForUser_EmptyForUnknownUser(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -148,8 +154,9 @@ func TestHouseholdRepo_ListForUser_EmptyForUnknownUser(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHouseholdRepo_FindMembership_ReturnsAdminMembership(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -164,8 +171,9 @@ func TestHouseholdRepo_FindMembership_ReturnsAdminMembership(t *testing.T) {
 }
 
 func TestHouseholdRepo_FindMembership_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -184,8 +192,9 @@ func TestHouseholdRepo_FindMembership_NotFound(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHouseholdRepo_ListMembers_ReturnsAllActive(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -210,8 +219,9 @@ func TestHouseholdRepo_ListMembers_ReturnsAllActive(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHouseholdRepo_AddMember_StoresAndReturns(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -231,8 +241,9 @@ func TestHouseholdRepo_AddMember_StoresAndReturns(t *testing.T) {
 }
 
 func TestHouseholdRepo_AddMember_DuplicateReturnsMemberExists(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -260,8 +271,9 @@ func TestHouseholdRepo_AddMember_DuplicateReturnsMemberExists(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHouseholdRepo_RemoveMember_SoftDeletes(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -283,8 +295,9 @@ func TestHouseholdRepo_RemoveMember_SoftDeletes(t *testing.T) {
 }
 
 func TestHouseholdRepo_RemoveMember_IsIdempotent(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -301,8 +314,9 @@ func TestHouseholdRepo_RemoveMember_IsIdempotent(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHouseholdRepo_UpdateName_ChangesNameAndVersion(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -318,8 +332,9 @@ func TestHouseholdRepo_UpdateName_ChangesNameAndVersion(t *testing.T) {
 }
 
 func TestHouseholdRepo_UpdateName_VersionConflict(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -338,8 +353,9 @@ func TestHouseholdRepo_UpdateName_VersionConflict(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHouseholdRepo_Deactivate_SoftDeletes(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -354,8 +370,9 @@ func TestHouseholdRepo_Deactivate_SoftDeletes(t *testing.T) {
 }
 
 func TestHouseholdRepo_Deactivate_IsIdempotent(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 
@@ -374,8 +391,9 @@ func TestHouseholdRepo_Deactivate_IsIdempotent(t *testing.T) {
 // a committed transaction, both the household and its admin membership are
 // visible in subsequent queries.
 func TestHouseholdRepo_Txn_CreateCommits(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	tx := database.NewPostgresTransactor(pool)
 	callerID := insertTestUser(t, pool)
@@ -405,8 +423,9 @@ func TestHouseholdRepo_Txn_CreateCommits(t *testing.T) {
 // TestHouseholdRepo_Txn_CreateRollsBack verifies that when a transaction
 // fails after Create, neither the household nor the membership is committed.
 func TestHouseholdRepo_Txn_CreateRollsBack(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	tx := database.NewPostgresTransactor(pool)
 	callerID := insertTestUser(t, pool)
@@ -438,8 +457,9 @@ func TestHouseholdRepo_Txn_CreateRollsBack(t *testing.T) {
 // TestHouseholdRepo_Workflow_DeactivateHidesFromAllMembers verifies that
 // deactivating a household removes it from ListForUser for every member.
 func TestHouseholdRepo_Workflow_DeactivateHidesFromAllMembers(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	admin := insertTestUser(t, pool)
 	member := insertTestUser(t, pool)
@@ -480,8 +500,9 @@ func TestHouseholdRepo_Workflow_DeactivateHidesFromAllMembers(t *testing.T) {
 // makes the household visible in their list, and removing them hides it —
 // while other members remain unaffected.
 func TestHouseholdRepo_Workflow_AddRemoveMember(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	admin := insertTestUser(t, pool)
 	member := insertTestUser(t, pool)
@@ -519,8 +540,9 @@ func TestHouseholdRepo_Workflow_AddRemoveMember(t *testing.T) {
 // two sequential updates with correct version chain succeed (v1→v2→v3),
 // but reusing the first version fails.
 func TestHouseholdRepo_Workflow_VersionChain(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewHouseholdRepo(pool)
 	callerID := insertTestUser(t, pool)
 

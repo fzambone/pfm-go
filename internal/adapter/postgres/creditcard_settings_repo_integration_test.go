@@ -40,8 +40,9 @@ func defaultCCInput() creditcard.CreateInput {
 // ---------------------------------------------------------------------------
 
 func TestCCSettingsRepo_Create_StoresAndReturns(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 
@@ -58,8 +59,9 @@ func TestCCSettingsRepo_Create_StoresAndReturns(t *testing.T) {
 }
 
 func TestCCSettingsRepo_Create_Duplicate_ReturnsExists(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 
@@ -77,8 +79,9 @@ func TestCCSettingsRepo_Create_Duplicate_ReturnsExists(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCCSettingsRepo_FindByAccountID_ReturnsSettings(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 
@@ -93,8 +96,9 @@ func TestCCSettingsRepo_FindByAccountID_ReturnsSettings(t *testing.T) {
 }
 
 func TestCCSettingsRepo_FindByAccountID_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 
 	_, err := repo.FindByAccountID(ctx, uuid.MustParse("00000000-0000-0000-0000-000000000099"))
@@ -104,8 +108,9 @@ func TestCCSettingsRepo_FindByAccountID_NotFound(t *testing.T) {
 }
 
 func TestCCSettingsRepo_FindByAccountID_SoftDeleted_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 
@@ -124,8 +129,9 @@ func TestCCSettingsRepo_FindByAccountID_SoftDeleted_NotFound(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCCSettingsRepo_UpdateClosingDay_ChangesAndVersions(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 
@@ -141,8 +147,9 @@ func TestCCSettingsRepo_UpdateClosingDay_ChangesAndVersions(t *testing.T) {
 }
 
 func TestCCSettingsRepo_UpdateClosingDay_VersionConflict(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 
@@ -161,8 +168,9 @@ func TestCCSettingsRepo_UpdateClosingDay_VersionConflict(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCCSettingsRepo_UpdateDueDay_ChangesAndVersions(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 
@@ -182,8 +190,9 @@ func TestCCSettingsRepo_UpdateDueDay_ChangesAndVersions(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCCSettingsRepo_UpdateLimit_ChangesAndVersions(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 
@@ -203,8 +212,9 @@ func TestCCSettingsRepo_UpdateLimit_ChangesAndVersions(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCCSettingsRepo_Delete_SoftDeletes(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 
@@ -219,8 +229,9 @@ func TestCCSettingsRepo_Delete_SoftDeletes(t *testing.T) {
 }
 
 func TestCCSettingsRepo_Delete_IsIdempotent(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewCreditCardSettingsRepo(pool)
 	accountID := insertTestAccount(t, pool)
 

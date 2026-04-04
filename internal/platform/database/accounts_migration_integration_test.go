@@ -14,6 +14,7 @@ import (
 // TestAccountsMigration_DefaultsOnCreate verifies AC1: a new account has name, type,
 // currency, zero balance, version=1, and status='ACTIVE'.
 func TestAccountsMigration_DefaultsOnCreate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -57,6 +58,7 @@ func TestAccountsMigration_DefaultsOnCreate(t *testing.T) {
 // TestAccountsMigration_NameUniqueWithinHousehold verifies AC2: two accounts in the same
 // household cannot share the same name.
 func TestAccountsMigration_NameUniqueWithinHousehold(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -91,6 +93,7 @@ func TestAccountsMigration_NameUniqueWithinHousehold(t *testing.T) {
 // TestAccountsMigration_NameAllowedAcrossHouseholds verifies AC3: two accounts in different
 // households may share the same name.
 func TestAccountsMigration_NameAllowedAcrossHouseholds(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -137,6 +140,7 @@ func TestAccountsMigration_NameAllowedAcrossHouseholds(t *testing.T) {
 // TestAccountsMigration_SoftDeleteReleasesName verifies AC4: after an account is soft-deleted,
 // its name becomes available for reuse within the same household.
 func TestAccountsMigration_SoftDeleteReleasesName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -177,6 +181,7 @@ func TestAccountsMigration_SoftDeleteReleasesName(t *testing.T) {
 // TestAccountsMigration_AccountTypeEnforced verifies AC5: only valid account_type values
 // are accepted; any other value is rejected by the CHECK constraint.
 func TestAccountsMigration_AccountTypeEnforced(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -204,6 +209,7 @@ func TestAccountsMigration_AccountTypeEnforced(t *testing.T) {
 // TestAccountsMigration_CurrencyCodeEnforced verifies AC6: only USD, BRL, and EUR are
 // valid currency codes; any other value is rejected by the CHECK constraint.
 func TestAccountsMigration_CurrencyCodeEnforced(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -231,6 +237,7 @@ func TestAccountsMigration_CurrencyCodeEnforced(t *testing.T) {
 // TestAccountsMigration_RollbackRemovesTable verifies AC7: rolling back the accounts
 // migration drops the table and all constraints cleanly.
 func TestAccountsMigration_RollbackRemovesTable(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	sub := usersMigrationsFS(t)

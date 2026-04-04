@@ -81,6 +81,7 @@ func balanceURL(householdID, accountID string) string {
 // TestE2E_Ledger_PostTransaction_Success verifies AC1: a balanced transaction
 // returns 201 with the transaction and all its entries.
 func TestE2E_Ledger_PostTransaction_Success(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger1@example.com", "Ledger House 1")
@@ -107,6 +108,7 @@ func TestE2E_Ledger_PostTransaction_Success(t *testing.T) {
 // TestE2E_Ledger_PostTransaction_Unbalanced verifies AC2: a transaction where
 // total debits ≠ total credits returns 422.
 func TestE2E_Ledger_PostTransaction_Unbalanced(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger2@example.com", "Ledger House 2")
@@ -126,6 +128,7 @@ func TestE2E_Ledger_PostTransaction_Unbalanced(t *testing.T) {
 // TestE2E_Ledger_PostTransaction_ValidationError verifies AC3: a transaction with
 // an empty description returns 400.
 func TestE2E_Ledger_PostTransaction_ValidationError_EmptyDescription(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger3a@example.com", "Ledger House 3a")
@@ -145,6 +148,7 @@ func TestE2E_Ledger_PostTransaction_ValidationError_EmptyDescription(t *testing.
 // TestE2E_Ledger_PostTransaction_ValidationError_NoEntries verifies AC3: a transaction
 // with no entries returns 400.
 func TestE2E_Ledger_PostTransaction_ValidationError_NoEntries(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger3b@example.com", "Ledger House 3b")
@@ -161,6 +165,7 @@ func TestE2E_Ledger_PostTransaction_ValidationError_NoEntries(t *testing.T) {
 // TestE2E_Ledger_GetBalance_AfterMultipleTransactions verifies AC4: the balance
 // reflects the cumulative net of all debits and credits.
 func TestE2E_Ledger_GetBalance_AfterMultipleTransactions(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger4@example.com", "Ledger House 4")
@@ -183,6 +188,7 @@ func TestE2E_Ledger_GetBalance_AfterMultipleTransactions(t *testing.T) {
 // TestE2E_Ledger_GetBalance_NoEntries_ReturnsZero verifies AC5: querying the balance
 // for an account with no entries returns zero (not an error).
 func TestE2E_Ledger_GetBalance_NoEntries_ReturnsZero(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger5@example.com", "Ledger House 5")
@@ -197,6 +203,7 @@ func TestE2E_Ledger_GetBalance_NoEntries_ReturnsZero(t *testing.T) {
 // TestE2E_Ledger_GetHistory_ReturnsAllTransactions verifies AC6: history returns all
 // transactions with their entries for the household.
 func TestE2E_Ledger_GetHistory_ReturnsAllTransactions(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger6@example.com", "Ledger House 6")
@@ -220,6 +227,7 @@ func TestE2E_Ledger_GetHistory_ReturnsAllTransactions(t *testing.T) {
 // TestE2E_Ledger_GetHistory_FilterByAccountID verifies AC7: the account_id query
 // parameter filters the history to transactions involving that account only.
 func TestE2E_Ledger_GetHistory_FilterByAccountID(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger7@example.com", "Ledger House 7")
@@ -250,6 +258,7 @@ func TestE2E_Ledger_GetHistory_FilterByAccountID(t *testing.T) {
 // TestE2E_Ledger_GetHistory_Pagination verifies AC8: limit and offset query
 // parameters are respected.
 func TestE2E_Ledger_GetHistory_Pagination(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger8@example.com", "Ledger House 8")
@@ -277,6 +286,7 @@ func TestE2E_Ledger_GetHistory_Pagination(t *testing.T) {
 // TestE2E_Ledger_GetHistory_Empty verifies AC9: a household with no transactions
 // returns an empty array (not null, not 404).
 func TestE2E_Ledger_GetHistory_Empty(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger9@example.com", "Ledger House 9")
@@ -293,6 +303,7 @@ func TestE2E_Ledger_GetHistory_Empty(t *testing.T) {
 // TestE2E_Ledger_SplitTransaction_ThreeEntries verifies the edge case: a transaction
 // with 3 entries (split expense across 3 accounts) balances correctly.
 func TestE2E_Ledger_SplitTransaction_ThreeEntries(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger-split@example.com", "Split House")
@@ -340,6 +351,7 @@ func TestE2E_Ledger_SplitTransaction_ThreeEntries(t *testing.T) {
 // TestE2E_Ledger_RunningBalance_Cumulative verifies the edge case: balance is
 // cumulative across multiple transactions on the same accounts.
 func TestE2E_Ledger_RunningBalance_Cumulative(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger-cumul@example.com", "Cumul House")
@@ -362,6 +374,7 @@ func TestE2E_Ledger_RunningBalance_Cumulative(t *testing.T) {
 // TestE2E_Ledger_Balance_DebitOnly_IsNegative verifies the edge case: an account
 // that only has debit entries has a negative balance.
 func TestE2E_Ledger_Balance_DebitOnly_IsNegative(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger-debit@example.com", "Debit House")
@@ -379,6 +392,7 @@ func TestE2E_Ledger_Balance_DebitOnly_IsNegative(t *testing.T) {
 // TestE2E_Ledger_TransactionDate_Format verifies the edge case: transaction_date
 // is stored and returned in YYYY-MM-DD format.
 func TestE2E_Ledger_TransactionDate_Format(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	setup := createLedgerSetupHelper(t, env, "ledger-date@example.com", "Date House")
