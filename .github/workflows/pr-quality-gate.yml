@@ -1,13 +1,12 @@
-# PR Quality Gate — runs on every PR against main and on every push to main.
+# PR Quality Gate — runs on every PR against main.
 # Steps: lint → unit tests (no integration) → build.
+# Post-merge checks (including integration tests) run in merge-quality-gate.yml.
 # All action versions are pinned; no `latest` references.
 
 name: PR Quality Gate
 
 on:
   pull_request:
-    branches: [main]
-  push:
     branches: [main]
 
 permissions:

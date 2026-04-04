@@ -42,11 +42,28 @@ func setupAdminURL(ctx context.Context) func() {
 }
 
 // prepareTemplate creates pfm_template and applies all goose migrations to it.
+// Safe to call concurrently: uses a Postgres advisory lock so only the first
+// caller creates and migrates the template; others wait, see it exists, and return.
 func prepareTemplate(ctx context.Context) {
 	conn := dbAdminConn(ctx)
-	dbAdminExec(ctx, conn, fmt.Sprintf(`DROP DATABASE IF EXISTS %s`, dbTemplateDB))
+	defer conn.Close(ctx)
+
+	// Serialize concurrent prepareTemplate calls across packages sharing the
+	// same Postgres service container in CI.
+	dbAdminExec(ctx, conn, `SELECT pg_advisory_lock(7382910)`)
+
+	var exists bool
+	if err := conn.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)`, dbTemplateDB,
+	).Scan(&exists); err != nil {
+		panic(fmt.Sprintf("testmain: check template exists: %v", err))
+	}
+	if exists {
+		// Already created and migrated by another package's TestMain.
+		return
+	}
+
 	dbAdminExec(ctx, conn, fmt.Sprintf(`CREATE DATABASE %s`, dbTemplateDB))
-	conn.Close(ctx)
 
 	templateURL := dbReplaceDBName(dbAdminURL, dbTemplateDB)
 	sqlDB, err := Open(ctx, dbURLToConfig(templateURL))
@@ -63,6 +80,7 @@ func prepareTemplate(ctx context.Context) {
 	if err := sqlDB.Close(); err != nil {
 		panic(fmt.Sprintf("testmain: close template: %v", err))
 	}
+	// defer conn.Close(ctx) releases the advisory lock.
 }
 
 func startLocalContainer(ctx context.Context) func() {

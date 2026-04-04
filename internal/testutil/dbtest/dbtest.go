@@ -69,17 +69,38 @@ func Setup(ctx context.Context) (*SharedDB, func()) {
 // migrations to it. After this call, pfm_template has no active connections
 // and is ready to be cloned by NewPool.
 //
+// Safe to call concurrently from multiple packages sharing the same Postgres
+// server (e.g. the GitHub Actions service container). An advisory lock ensures
+// only the first caller creates and migrates the template; subsequent callers
+// block until the template is ready, then return immediately.
+//
 // Must be called once in TestMain, after Setup and before m.Run().
 func (s *SharedDB) PrepareTemplate(ctx context.Context) {
 	conn := s.adminConn(ctx)
+	defer conn.Close(ctx)
 
-	// Drop and recreate so TestMain is idempotent when a persistent service
-	// container is reused across workflow retries.
-	mustExec(ctx, conn, fmt.Sprintf(`DROP DATABASE IF EXISTS %s`, templateDB))
+	// Serialize concurrent PrepareTemplate calls across packages. In CI all
+	// packages share the same Postgres service container and their TestMain
+	// functions run in parallel. The advisory lock ensures only one caller
+	// creates and migrates pfm_template; the others wait, then see it exists
+	// and return without repeating the work.
+	mustExec(ctx, conn, `SELECT pg_advisory_lock(7382910)`)
+
+	var exists bool
+	if err := conn.QueryRow(ctx,
+		`SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)`, templateDB,
+	).Scan(&exists); err != nil {
+		panic(fmt.Sprintf("dbtest: check template exists: %v", err))
+	}
+	if exists {
+		// Already created and migrated by another package's TestMain.
+		return
+	}
+
 	mustExec(ctx, conn, fmt.Sprintf(`CREATE DATABASE %s`, templateDB))
-	conn.Close(ctx)
 
-	// Apply all goose migrations via the database/sql adapter.
+	// Apply goose migrations while the advisory lock is held, so concurrent
+	// callers cannot use pfm_template before it is fully migrated.
 	templateURL := replaceDBName(s.adminURL, templateDB)
 	sqlDB, err := database.Open(ctx, urlToConfig(templateURL))
 	if err != nil {
@@ -98,6 +119,7 @@ func (s *SharedDB) PrepareTemplate(ctx context.Context) {
 	if err := sqlDB.Close(); err != nil {
 		panic(fmt.Sprintf("dbtest: close template db: %v", err))
 	}
+	// defer conn.Close(ctx) releases the advisory lock when PrepareTemplate returns.
 }
 
 // NewPool creates an isolated per-test database cloned from pfm_template and
