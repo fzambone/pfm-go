@@ -1,0 +1,44 @@
+# Deploy to Fly.io — triggers when the Merge Quality Gate completes successfully
+# on main. Runs flyctl deploy --remote-only, which builds the Docker image on
+# Fly.io's remote builders and rolls out the new machine. Migrations run
+# automatically at binary startup (main.go) before the HTTP server accepts
+# traffic; the /health/ready health check in fly.toml ensures Fly.io only
+# switches traffic to a machine that has successfully migrated and started.
+# All action versions are pinned; flyctl-actions uses @master (no stable tags).
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["Merge Quality Gate"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-24.04
+    # Only deploy when the quality gate succeeded — skip on failure or cancellation.
+    if: github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Check out the exact commit the quality gate ran on, not the branch tip.
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy
+        # --remote-only: build the Docker image on Fly.io's remote builders —
+        #   no local Docker daemon required.
+        # --wait-timeout 5m: fail the job if the new machine does not pass its
+        #   health check within 5 minutes, preventing ambiguous hanging deploys.
+        run: flyctl deploy --remote-only --wait-timeout 5m
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
