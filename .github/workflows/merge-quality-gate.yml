@@ -58,3 +58,26 @@ jobs:
 
       - name: Build
         run: make build
+
+      - name: Smoke test
+        # Start the compiled binary against the service container Postgres and
+        # verify it reaches a healthy state. This is the only test that exercises
+        # the full main.go startup path — repos, logic, middleware, and HTTP server
+        # wired together as they are in production.
+        # TOKEN_SECRET_KEY is a throwaway 32-byte hex key (64 hex chars), safe for CI.
+        env:
+          DATABASE_URL: postgres://testuser:testpass@localhost:5432/postgres?sslmode=disable
+          TOKEN_SECRET_KEY: "0000000000000000000000000000000000000000000000000000000000000001"
+          HTTP_PORT: "9090"
+        run: |
+          ./bin/pfm &
+          PFM_PID=$!
+          for i in $(seq 1 15); do
+            if curl -sf http://localhost:9090/health/live > /dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          curl -sf http://localhost:9090/health/live
+          curl -sf http://localhost:9090/health/ready
+          kill $PFM_PID

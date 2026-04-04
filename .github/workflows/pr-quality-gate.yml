@@ -35,9 +35,8 @@ jobs:
           # dev machines and CI. golangci-lint v2 requires action v7+.
           version: v2.10.1
 
-      - name: Test
-        # Run unit tests only — integration tests require Docker and run in the
-        # merge-to-main gate (issue #156). No -tags integration here.
+      - name: Test (unit)
+        # Unit tests only — integration tests run in merge-quality-gate.yml.
         run: go test -race -count=1 ./...
 
       - name: Build
