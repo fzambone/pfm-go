@@ -5,7 +5,6 @@ package postgres_test
 import (
 	"context"
 	"errors"
-	"io/fs"
 	"strings"
 	"testing"
 
@@ -13,75 +12,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 
-	pfmdb "github.com/zambone/pfm-go/db"
 	"github.com/zambone/pfm-go/internal/adapter/postgres"
 	domainuser "github.com/zambone/pfm-go/internal/domain/user"
 	"github.com/zambone/pfm-go/internal/message"
-	"github.com/zambone/pfm-go/internal/platform/config"
-	"github.com/zambone/pfm-go/internal/platform/database"
 )
 
-// testPasswordHash is a valid-length placeholder hash used for insertion fixtures.
+// integTestPasswordHash is a valid-length placeholder hash used for insertion fixtures.
 var integTestPasswordHash = strings.Repeat("x", 128)
-
-// newTestPool spins up a Postgres container, runs all migrations, and returns
-// a *pgxpool.Pool. Each call creates an isolated container — tests never share state.
-func newTestPool(t *testing.T, ctx context.Context) *pgxpool.Pool {
-	t.Helper()
-
-	ctr, err := tcpostgres.Run(ctx,
-		"postgres:18-alpine3.23",
-		tcpostgres.WithDatabase("testdb"),
-		tcpostgres.WithUsername("testuser"),
-		tcpostgres.WithPassword("testpass"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2),
-		),
-	)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = ctr.Terminate(ctx) })
-
-	host, err := ctr.Host(ctx)
-	require.NoError(t, err)
-	mappedPort, err := ctr.MappedPort(ctx, "5432")
-	require.NoError(t, err)
-
-	cfg := &config.Config{
-		DatabaseHost:           host,
-		DatabasePort:           mappedPort.Int(),
-		DatabaseName:           "testdb",
-		DatabaseUser:           "testuser",
-		DatabasePassword:       "testpass",
-		DatabaseSSLMode:        "disable",
-		DBConnectTimeoutSec:    5,
-		DBStartupRetries:       3,
-		DBStartupRetryDelaySec: 1,
-		DBMaxOpenConns:         5,
-		DBMaxIdleConns:         2,
-		DBConnMaxLifetimeSec:   60,
-		DBConnMaxIdleTimeSec:   30,
-	}
-
-	// Run migrations via database/sql (goose requirement).
-	sqlDB, err := database.Open(ctx, cfg)
-	require.NoError(t, err)
-	sub, err := fs.Sub(pfmdb.Migrations, "migrations")
-	require.NoError(t, err)
-	require.NoError(t, database.Migrate(ctx, sqlDB, sub))
-	require.NoError(t, sqlDB.Close())
-
-	// Re-connect with the pgx-native pool for application queries.
-	pool, err := database.NewPool(ctx, cfg)
-	require.NoError(t, err)
-	t.Cleanup(func() { pool.Close() })
-
-	return pool
-}
 
 // insertUser is a test helper that inserts a user row directly via SQL.
 func insertUser(t *testing.T, pool *pgxpool.Pool, email, passwordHash string) {
@@ -96,8 +34,9 @@ func insertUser(t *testing.T, pool *pgxpool.Pool, email, passwordHash string) {
 // TestUserRepo_FindByEmail_ReturnsUser verifies the happy path:
 // an existing active user is found and all fields are populated.
 func TestUserRepo_FindByEmail_ReturnsUser(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	insertUser(t, pool, "alice@example.com", integTestPasswordHash)
@@ -113,8 +52,9 @@ func TestUserRepo_FindByEmail_ReturnsUser(t *testing.T) {
 // TestUserRepo_FindByEmail_CaseInsensitive verifies that email lookup ignores case:
 // "ALICE@EXAMPLE.COM" matches the record stored as "alice@example.com".
 func TestUserRepo_FindByEmail_CaseInsensitive(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	insertUser(t, pool, "alice@example.com", integTestPasswordHash)
@@ -128,8 +68,9 @@ func TestUserRepo_FindByEmail_CaseInsensitive(t *testing.T) {
 // TestUserRepo_FindByEmail_NotFound_ReturnsInvalidCredentials verifies that
 // a missing email returns an error wrapping ErrLoginInvalidCredentials.
 func TestUserRepo_FindByEmail_NotFound_ReturnsInvalidCredentials(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	_, err := repo.FindByEmail(ctx, "nobody@example.com")
@@ -142,8 +83,9 @@ func TestUserRepo_FindByEmail_NotFound_ReturnsInvalidCredentials(t *testing.T) {
 // TestUserRepo_FindByEmail_SoftDeleted_ReturnsInvalidCredentials verifies AC4:
 // a soft-deleted user is invisible to FindByEmail (deleted_at IS NULL in SQL).
 func TestUserRepo_FindByEmail_SoftDeleted_ReturnsInvalidCredentials(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	insertUser(t, pool, "deleted@example.com", integTestPasswordHash)
@@ -180,8 +122,9 @@ func integRegisterInput(email string) domainuser.RegisterInput {
 // TestUserRepo_Create_StoresAndReturnsUser verifies the happy path:
 // the created user has a server-assigned ID, correct fields, and Version = 1.
 func TestUserRepo_Create_StoresAndReturnsUser(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	u, err := repo.Create(ctx, integRegisterInput("create@example.com"), integTestPasswordHash, integCallerID)
@@ -199,8 +142,9 @@ func TestUserRepo_Create_StoresAndReturnsUser(t *testing.T) {
 // TestUserRepo_Create_EmailAlreadyTaken verifies that inserting a duplicate email
 // returns an error wrapping ErrUserEmailTaken.
 func TestUserRepo_Create_EmailAlreadyTaken(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	insertUser(t, pool, "taken@example.com", integTestPasswordHash)
@@ -216,8 +160,9 @@ func TestUserRepo_Create_EmailAlreadyTaken(t *testing.T) {
 // is case-insensitive: inserting "ALICE@example.com" when "alice@example.com" already
 // exists returns ErrUserEmailTaken.
 func TestUserRepo_Create_EmailCaseInsensitiveDuplicate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	_, err := repo.Create(ctx, integRegisterInput("alice@example.com"), integTestPasswordHash, integCallerID)
@@ -236,8 +181,9 @@ func TestUserRepo_Create_EmailCaseInsensitiveDuplicate(t *testing.T) {
 
 // TestUserRepo_FindByID_ReturnsUser verifies that an inserted user is returned by ID.
 func TestUserRepo_FindByID_ReturnsUser(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	created, err := repo.Create(ctx, integRegisterInput("findbyid@example.com"), integTestPasswordHash, integCallerID)
@@ -253,8 +199,9 @@ func TestUserRepo_FindByID_ReturnsUser(t *testing.T) {
 
 // TestUserRepo_FindByID_NotFound verifies that a missing ID returns ErrUserNotFound.
 func TestUserRepo_FindByID_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	_, err := repo.FindByID(ctx, uuid.MustParse("00000000-0000-0000-0000-000000000099"))
@@ -267,8 +214,9 @@ func TestUserRepo_FindByID_NotFound(t *testing.T) {
 // TestUserRepo_FindByID_SoftDeleted_NotFound verifies that a deactivated user
 // is invisible to FindByID.
 func TestUserRepo_FindByID_SoftDeleted_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	created, err := repo.Create(ctx, integRegisterInput("deleted2@example.com"), integTestPasswordHash, integCallerID)
@@ -291,8 +239,9 @@ func TestUserRepo_FindByID_SoftDeleted_NotFound(t *testing.T) {
 // TestUserRepo_UpdateProfile_UpdatesDisplayName verifies the happy path:
 // display name is updated and version increments.
 func TestUserRepo_UpdateProfile_UpdatesDisplayName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	created, err := repo.Create(ctx, integRegisterInput("profile@example.com"), integTestPasswordHash, integCallerID)
@@ -310,8 +259,9 @@ func TestUserRepo_UpdateProfile_UpdatesDisplayName(t *testing.T) {
 // TestUserRepo_UpdateProfile_VersionConflict verifies that a stale version
 // returns ErrUserVersionConflict.
 func TestUserRepo_UpdateProfile_VersionConflict(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	created, err := repo.Create(ctx, integRegisterInput("conflict@example.com"), integTestPasswordHash, integCallerID)
@@ -333,8 +283,9 @@ func TestUserRepo_UpdateProfile_VersionConflict(t *testing.T) {
 // TestUserRepo_ChangePassword_UpdatesHash verifies the happy path:
 // the password hash is replaced and version increments.
 func TestUserRepo_ChangePassword_UpdatesHash(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	created, err := repo.Create(ctx, integRegisterInput("pwd@example.com"), integTestPasswordHash, integCallerID)
@@ -351,8 +302,9 @@ func TestUserRepo_ChangePassword_UpdatesHash(t *testing.T) {
 // TestUserRepo_ChangePassword_VersionConflict verifies that a stale version
 // returns ErrUserVersionConflict.
 func TestUserRepo_ChangePassword_VersionConflict(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	created, err := repo.Create(ctx, integRegisterInput("pwdconflict@example.com"), integTestPasswordHash, integCallerID)
@@ -372,8 +324,9 @@ func TestUserRepo_ChangePassword_VersionConflict(t *testing.T) {
 // TestUserRepo_Deactivate_SoftDeletesUser verifies that a deactivated user
 // is no longer findable by ID or email.
 func TestUserRepo_Deactivate_SoftDeletesUser(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	created, err := repo.Create(ctx, integRegisterInput("deactivate@example.com"), integTestPasswordHash, integCallerID)
@@ -394,8 +347,9 @@ func TestUserRepo_Deactivate_SoftDeletesUser(t *testing.T) {
 // TestUserRepo_Deactivate_IsIdempotent verifies that deactivating an already-
 // deactivated user does not return an error.
 func TestUserRepo_Deactivate_IsIdempotent(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewUserRepo(pool)
 
 	created, err := repo.Create(ctx, integRegisterInput("idemp@example.com"), integTestPasswordHash, integCallerID)

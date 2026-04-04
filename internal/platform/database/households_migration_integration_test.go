@@ -14,6 +14,7 @@ import (
 // TestHouseholdsMigration_DefaultsOnCreate verifies AC1: a newly created household has
 // status = 'ACTIVE', version = 1, and non-null audit timestamps.
 func TestHouseholdsMigration_DefaultsOnCreate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -48,6 +49,7 @@ func TestHouseholdsMigration_DefaultsOnCreate(t *testing.T) {
 // TestHouseholdsMigration_MembershipRecordsFields verifies AC2: a membership row captures
 // household_id, user_id, role, and invited_by correctly.
 func TestHouseholdsMigration_MembershipRecordsFields(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -106,6 +108,7 @@ func TestHouseholdsMigration_MembershipRecordsFields(t *testing.T) {
 // TestHouseholdsMigration_RoleEnforcedByCheck verifies AC3: only 'ADMIN' and 'MEMBER'
 // are valid role values — any other value must be rejected by the CHECK constraint.
 func TestHouseholdsMigration_RoleEnforcedByCheck(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -133,6 +136,7 @@ func TestHouseholdsMigration_RoleEnforcedByCheck(t *testing.T) {
 // TestHouseholdsMigration_SoftDeletedHouseholdExcluded verifies AC4: a soft-deleted
 // household must not appear in queries that filter WHERE deleted_at IS NULL.
 func TestHouseholdsMigration_SoftDeletedHouseholdExcluded(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -168,6 +172,7 @@ func TestHouseholdsMigration_SoftDeletedHouseholdExcluded(t *testing.T) {
 // TestHouseholdsMigration_SoftDeletedMemberRetained verifies AC5: soft-deleting a
 // membership record sets deleted_at but retains the row for audit purposes.
 func TestHouseholdsMigration_SoftDeletedMemberRetained(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -212,6 +217,7 @@ func TestHouseholdsMigration_SoftDeletedMemberRetained(t *testing.T) {
 // TestHouseholdsMigration_RollbackRemovesBothTables verifies AC6: rolling back the
 // household migration drops both tables and all associated constraints cleanly.
 func TestHouseholdsMigration_RollbackRemovesBothTables(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	sub := usersMigrationsFS(t)

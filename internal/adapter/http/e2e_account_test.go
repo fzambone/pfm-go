@@ -33,6 +33,7 @@ func createAccountHelper(t *testing.T, env *e2eEnv, email, householdName, accoun
 // TestE2E_Account_Create_Success verifies AC1: valid input returns 201 with
 // server-assigned ID and zero balance.
 func TestE2E_Account_Create_Success(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a1@example.com", "House A1")
@@ -56,6 +57,7 @@ func TestE2E_Account_Create_Success(t *testing.T) {
 // TestE2E_Account_Create_DuplicateName verifies AC2: duplicate name in the same
 // household returns 409.
 func TestE2E_Account_Create_DuplicateName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a2@example.com", "House A2")
@@ -79,6 +81,7 @@ func TestE2E_Account_Create_DuplicateName(t *testing.T) {
 
 // TestE2E_Account_Create_ValidationError_EmptyName verifies AC3: empty name returns 400.
 func TestE2E_Account_Create_ValidationError_EmptyName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a3a@example.com", "House A3a")
@@ -94,6 +97,7 @@ func TestE2E_Account_Create_ValidationError_EmptyName(t *testing.T) {
 // TestE2E_Account_Create_ValidationError_InvalidType verifies AC3: invalid account
 // type returns 400.
 func TestE2E_Account_Create_ValidationError_InvalidType(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a3b@example.com", "House A3b")
@@ -109,6 +113,7 @@ func TestE2E_Account_Create_ValidationError_InvalidType(t *testing.T) {
 // TestE2E_Account_Create_ValidationError_InvalidCurrency verifies AC3: invalid
 // currency code returns 400.
 func TestE2E_Account_Create_ValidationError_InvalidCurrency(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a3c@example.com", "House A3c")
@@ -124,6 +129,7 @@ func TestE2E_Account_Create_ValidationError_InvalidCurrency(t *testing.T) {
 // TestE2E_Account_GetByID verifies AC4: member retrieves an account by ID and
 // receives correct data.
 func TestE2E_Account_GetByID(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createAccountHelper(t, env, "a4@example.com", "House A4", "Checking")
@@ -139,6 +145,7 @@ func TestE2E_Account_GetByID(t *testing.T) {
 
 // TestE2E_Account_GetByID_NotFound verifies AC5: non-existent account ID returns 404.
 func TestE2E_Account_GetByID_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a5@example.com", "House A5")
@@ -150,6 +157,7 @@ func TestE2E_Account_GetByID_NotFound(t *testing.T) {
 // TestE2E_Account_List verifies AC6: listing accounts returns all active accounts
 // for the household.
 func TestE2E_Account_List(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a6@example.com", "House A6")
@@ -170,6 +178,7 @@ func TestE2E_Account_List(t *testing.T) {
 
 // TestE2E_Account_List_Empty verifies AC7: a household with no accounts returns [].
 func TestE2E_Account_List_Empty(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a7@example.com", "House A7")
@@ -183,6 +192,7 @@ func TestE2E_Account_List_Empty(t *testing.T) {
 // TestE2E_Account_UpdateName verifies AC8: updating an account name with the
 // correct version returns 200 with the updated name and incremented version.
 func TestE2E_Account_UpdateName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createAccountHelper(t, env, "a8@example.com", "House A8", "Old Name")
@@ -200,6 +210,7 @@ func TestE2E_Account_UpdateName(t *testing.T) {
 // TestE2E_Account_UpdateName_StaleVersion verifies AC9: a stale version on name
 // update returns 409.
 func TestE2E_Account_UpdateName_StaleVersion(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createAccountHelper(t, env, "a9@example.com", "House A9", "Acct")
@@ -219,6 +230,7 @@ func TestE2E_Account_UpdateName_StaleVersion(t *testing.T) {
 // TestE2E_Account_UpdateBalance verifies AC10: updating an account balance with
 // the correct version returns 200 with the new balance.
 func TestE2E_Account_UpdateBalance(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createAccountHelper(t, env, "a10@example.com", "House A10", "Checking")
@@ -236,6 +248,7 @@ func TestE2E_Account_UpdateBalance(t *testing.T) {
 // TestE2E_Account_Deactivate verifies AC11: deactivating an account with zero
 // balance returns 204 and subsequent GET returns 404.
 func TestE2E_Account_Deactivate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createAccountHelper(t, env, "a11@example.com", "House A11", "Checking")
@@ -250,6 +263,7 @@ func TestE2E_Account_Deactivate(t *testing.T) {
 // TestE2E_Account_Deactivate_BalanceNotZero verifies AC12: deactivating an account
 // with a non-zero balance returns 409.
 func TestE2E_Account_Deactivate_BalanceNotZero(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createAccountHelper(t, env, "a12@example.com", "House A12", "Checking")
@@ -275,6 +289,7 @@ func TestE2E_Account_Deactivate_BalanceNotZero(t *testing.T) {
 // TestE2E_Account_Create_DifferentTypes verifies edge case: all four account types
 // are accepted.
 func TestE2E_Account_Create_DifferentTypes(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a-types@example.com", "TypesHouse")
@@ -295,6 +310,7 @@ func TestE2E_Account_Create_DifferentTypes(t *testing.T) {
 // TestE2E_Account_Create_DifferentCurrencies verifies edge case: USD, BRL, and EUR
 // are all accepted.
 func TestE2E_Account_Create_DifferentCurrencies(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a-currencies@example.com", "CurrenciesHouse")
@@ -315,6 +331,7 @@ func TestE2E_Account_Create_DifferentCurrencies(t *testing.T) {
 // TestE2E_Account_List_AfterDeactivate verifies edge case: listing accounts after
 // deactivating one returns only the active accounts.
 func TestE2E_Account_List_AfterDeactivate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, _, householdID := createHouseholdHelper(t, env, "a-listdeact@example.com", "ListDeactHouse")
@@ -346,6 +363,7 @@ func TestE2E_Account_List_AfterDeactivate(t *testing.T) {
 // TestE2E_Account_UpdateBalance_Negative verifies edge case: the domain accepts a
 // negative balance (representing an overdraft or owed amount).
 func TestE2E_Account_UpdateBalance_Negative(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createAccountHelper(t, env, "a-neg@example.com", "NegHouse", "Checking")

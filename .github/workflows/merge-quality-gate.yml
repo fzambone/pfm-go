@@ -1,6 +1,6 @@
 # Merge-to-main full quality gate — triggers on every push to main (PR merge,
 # rebase, or admin direct push). Runs the complete suite: lint, unit tests,
-# integration tests (testcontainers-go + real Postgres), and build.
+# integration tests (GitHub Actions Postgres service container + real SQL), and build.
 # Deployment workflows may only trigger after this gate passes.
 # All action versions are pinned; no `latest` references.
 
@@ -17,8 +17,21 @@ jobs:
   full-gate:
     name: full-gate
     runs-on: ubuntu-24.04
-    # Docker daemon is pre-installed on ubuntu-24.04 runners.
-    # testcontainers-go uses /var/run/docker.sock automatically.
+
+    services:
+      postgres:
+        image: postgres:18-alpine3.23
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testuser"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -39,11 +52,8 @@ jobs:
         run: go test -race -count=1 ./...
 
       - name: Test (integration)
-        # TESTCONTAINERS_RYUK_DISABLED prevents the Ryuk reaper container from
-        # starting. Ryuk can fail in GitHub Actions due to socket/permission
-        # restrictions; disabling it is the recommended workaround for CI.
         env:
-          TESTCONTAINERS_RYUK_DISABLED: "true"
+          TEST_DATABASE_URL: postgres://testuser:testpass@localhost:5432/postgres?sslmode=disable
         run: go test -tags integration -race -count=1 ./...
 
       - name: Build

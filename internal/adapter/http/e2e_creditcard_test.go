@@ -51,6 +51,7 @@ func ccSettingsURL(householdID, accountID string) string {
 // TestE2E_CCSettings_Create_Success verifies AC1: creating settings for a
 // CREDIT_CARD account returns 201 with the settings.
 func TestE2E_CCSettings_Create_Success(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc1@example.com", "CC House 1", "Visa")
@@ -74,6 +75,7 @@ func TestE2E_CCSettings_Create_Success(t *testing.T) {
 // TestE2E_CCSettings_Create_NotCreditCard verifies AC2: creating settings for a
 // non-CREDIT_CARD account returns the appropriate conflict error (409).
 func TestE2E_CCSettings_Create_NotCreditCard(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	// Use a CHECKING account — not a credit card.
@@ -91,6 +93,7 @@ func TestE2E_CCSettings_Create_NotCreditCard(t *testing.T) {
 // TestE2E_CCSettings_Create_Duplicate verifies AC3: creating settings for an
 // account that already has settings returns 409.
 func TestE2E_CCSettings_Create_Duplicate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc3@example.com", "CC House 3", "Visa")
@@ -108,6 +111,7 @@ func TestE2E_CCSettings_Create_Duplicate(t *testing.T) {
 // TestE2E_CCSettings_GetByAccountID verifies AC4: retrieving settings by account
 // ID returns 200 with the correct data.
 func TestE2E_CCSettings_GetByAccountID(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc4@example.com", "CC House 4", "Visa")
@@ -126,6 +130,7 @@ func TestE2E_CCSettings_GetByAccountID(t *testing.T) {
 // TestE2E_CCSettings_GetByAccountID_NotFound verifies AC5: retrieving settings
 // for an account with no settings returns 404.
 func TestE2E_CCSettings_GetByAccountID_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc5@example.com", "CC House 5", "Visa")
@@ -137,6 +142,7 @@ func TestE2E_CCSettings_GetByAccountID_NotFound(t *testing.T) {
 // TestE2E_CCSettings_UpdateClosingDay verifies AC6: updating the closing day with
 // the correct version returns 200 with the updated value and incremented version.
 func TestE2E_CCSettings_UpdateClosingDay(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc6@example.com", "CC House 6", "Visa")
@@ -156,6 +162,7 @@ func TestE2E_CCSettings_UpdateClosingDay(t *testing.T) {
 // TestE2E_CCSettings_UpdateDueDay verifies AC7: updating the due day with the
 // correct version returns 200 with the updated value.
 func TestE2E_CCSettings_UpdateDueDay(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc7@example.com", "CC House 7", "Visa")
@@ -175,6 +182,7 @@ func TestE2E_CCSettings_UpdateDueDay(t *testing.T) {
 // TestE2E_CCSettings_UpdateLimit verifies AC8: updating the credit limit with the
 // correct version returns 200 with the updated value.
 func TestE2E_CCSettings_UpdateLimit(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc8@example.com", "CC House 8", "Visa")
@@ -194,6 +202,7 @@ func TestE2E_CCSettings_UpdateLimit(t *testing.T) {
 // TestE2E_CCSettings_UpdateClosingDay_StaleVersion verifies AC9: any settings
 // update with a stale version returns 409.
 func TestE2E_CCSettings_UpdateClosingDay_StaleVersion(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc9@example.com", "CC House 9", "Visa")
@@ -216,6 +225,7 @@ func TestE2E_CCSettings_UpdateClosingDay_StaleVersion(t *testing.T) {
 // TestE2E_CCSettings_Delete verifies AC10: deleting settings returns 204 and
 // subsequent GET returns 404.
 func TestE2E_CCSettings_Delete(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc10@example.com", "CC House 10", "Visa")
@@ -232,6 +242,7 @@ func TestE2E_CCSettings_Delete(t *testing.T) {
 // deleting them, then creating new settings for the same account succeeds because
 // the uniqueness constraint is partial (WHERE deleted_at IS NULL).
 func TestE2E_CCSettings_RecreateAfterDelete(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc-recreate@example.com", "RecreateHouse", "Visa")
@@ -257,6 +268,7 @@ func TestE2E_CCSettings_RecreateAfterDelete(t *testing.T) {
 // TestE2E_CCSettings_ClosingDay_BoundaryValues verifies edge case: closing day
 // values of 1 and 31 are both accepted.
 func TestE2E_CCSettings_ClosingDay_BoundaryValues(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc-close-bound@example.com", "CloseBoundHouse", "Visa")
@@ -281,6 +293,7 @@ func TestE2E_CCSettings_ClosingDay_BoundaryValues(t *testing.T) {
 // TestE2E_CCSettings_DueDay_BoundaryValues verifies edge case: due day values of
 // 1 and 31 are both accepted.
 func TestE2E_CCSettings_DueDay_BoundaryValues(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc-due-bound@example.com", "DueBoundHouse", "Visa")
@@ -305,6 +318,7 @@ func TestE2E_CCSettings_DueDay_BoundaryValues(t *testing.T) {
 // TestE2E_CCSettings_UpdateLimit_LargeValue verifies edge case: a credit limit
 // near the int64 maximum is accepted (stored as BIGINT minor units).
 func TestE2E_CCSettings_UpdateLimit_LargeValue(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 	token, householdID, accountID := createCCAccountHelper(t, env, "cc-large@example.com", "LargeHouse", "Visa")

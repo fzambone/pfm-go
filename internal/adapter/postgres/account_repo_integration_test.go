@@ -48,8 +48,9 @@ func defaultAccountInput() account.CreateInput {
 // ---------------------------------------------------------------------------
 
 func TestAccountRepo_Create_StoresAndReturns(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -68,8 +69,9 @@ func TestAccountRepo_Create_StoresAndReturns(t *testing.T) {
 }
 
 func TestAccountRepo_Create_DuplicateName_ReturnsNameTaken(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -83,8 +85,9 @@ func TestAccountRepo_Create_DuplicateName_ReturnsNameTaken(t *testing.T) {
 }
 
 func TestAccountRepo_Create_CaseInsensitiveDuplicateName(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -106,8 +109,9 @@ func TestAccountRepo_Create_CaseInsensitiveDuplicateName(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestAccountRepo_FindByID_ReturnsAccount(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -122,8 +126,9 @@ func TestAccountRepo_FindByID_ReturnsAccount(t *testing.T) {
 }
 
 func TestAccountRepo_FindByID_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 
 	_, err := repo.FindByID(ctx, uuid.MustParse("00000000-0000-0000-0000-000000000099"))
@@ -133,8 +138,9 @@ func TestAccountRepo_FindByID_NotFound(t *testing.T) {
 }
 
 func TestAccountRepo_FindByID_SoftDeleted_NotFound(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -155,8 +161,9 @@ func TestAccountRepo_FindByID_SoftDeleted_NotFound(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestAccountRepo_ListForHousehold_ReturnsHouseholdAccounts(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -176,8 +183,9 @@ func TestAccountRepo_ListForHousehold_ReturnsHouseholdAccounts(t *testing.T) {
 }
 
 func TestAccountRepo_ListForHousehold_EmptyForOtherHousehold(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 	otherHousehold := insertTestHousehold(t, pool)
@@ -196,8 +204,9 @@ func TestAccountRepo_ListForHousehold_EmptyForOtherHousehold(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestAccountRepo_UpdateName_ChangesNameAndVersion(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -213,8 +222,9 @@ func TestAccountRepo_UpdateName_ChangesNameAndVersion(t *testing.T) {
 }
 
 func TestAccountRepo_UpdateName_VersionConflict(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -233,8 +243,9 @@ func TestAccountRepo_UpdateName_VersionConflict(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestAccountRepo_UpdateBalance_ChangesBalanceAndVersion(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -250,8 +261,9 @@ func TestAccountRepo_UpdateBalance_ChangesBalanceAndVersion(t *testing.T) {
 }
 
 func TestAccountRepo_UpdateBalance_VersionConflict(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -270,8 +282,9 @@ func TestAccountRepo_UpdateBalance_VersionConflict(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestAccountRepo_Deactivate_SoftDeletes(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -286,8 +299,9 @@ func TestAccountRepo_Deactivate_SoftDeletes(t *testing.T) {
 }
 
 func TestAccountRepo_Deactivate_IsIdempotent(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -305,8 +319,9 @@ func TestAccountRepo_Deactivate_IsIdempotent(t *testing.T) {
 // TestAccountRepo_Workflow_DeactivateHidesFromList verifies that a deactivated
 // account no longer appears in ListForHousehold results.
 func TestAccountRepo_Workflow_DeactivateHidesFromList(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -333,8 +348,9 @@ func TestAccountRepo_Workflow_DeactivateHidesFromList(t *testing.T) {
 // two sequential updates with correct version chain succeed (v1→v2→v3),
 // but reusing the first version fails.
 func TestAccountRepo_Workflow_VersionChain(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 
@@ -363,8 +379,9 @@ func TestAccountRepo_Workflow_VersionChain(t *testing.T) {
 // AccountLogic layer rejects deactivation when balance is non-zero, using
 // the real postgres adapter.
 func TestAccountRepo_Workflow_NonZeroBalanceDeactivateRejected(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	clk := clock.NewFakeClock(fixedAccountTime)
 	logic := account.NewAccountLogic(repo, clk)
@@ -395,8 +412,9 @@ func TestAccountRepo_Workflow_NonZeroBalanceDeactivateRejected(t *testing.T) {
 // is soft-deleted, its name can be reused by a new account in the same household
 // (the partial unique index only covers non-deleted rows).
 func TestAccountRepo_Workflow_DeactivatedNameReusable(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewAccountRepo(pool)
 	householdID := insertTestHousehold(t, pool)
 

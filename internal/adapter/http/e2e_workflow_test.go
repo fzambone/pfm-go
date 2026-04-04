@@ -18,6 +18,7 @@ import (
 // registration through account deactivation and household deactivation, exercising
 // every domain in a single cohesive flow.
 func TestE2E_Workflow_FullFinancialLifecycle(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -110,6 +111,7 @@ func TestE2E_Workflow_FullFinancialLifecycle(t *testing.T) {
 // TestE2E_Workflow_MultiUserCollaboration verifies AC2: two users in a household
 // can both create accounts and post transactions, and both appear in history.
 func TestE2E_Workflow_MultiUserCollaboration(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -174,6 +176,7 @@ func TestE2E_Workflow_MultiUserCollaboration(t *testing.T) {
 // TestE2E_Workflow_MemberRoleEnforcement verifies AC3: MEMBER is blocked from
 // admin-only household operations (403) but can freely read and create resources.
 func TestE2E_Workflow_MemberRoleEnforcement(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -236,6 +239,7 @@ func TestE2E_Workflow_MemberRoleEnforcement(t *testing.T) {
 // TestE2E_Workflow_DualAdminOperations verifies AC4: after a second admin is added,
 // both admins can independently perform admin-only operations.
 func TestE2E_Workflow_DualAdminOperations(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -279,6 +283,7 @@ func TestE2E_Workflow_DualAdminOperations(t *testing.T) {
 // TestE2E_Workflow_MultiCurrencyAccounts verifies AC5: accounts created in different
 // currencies within the same household maintain independent balances.
 func TestE2E_Workflow_MultiCurrencyAccounts(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -355,6 +360,7 @@ func TestE2E_Workflow_MultiCurrencyAccounts(t *testing.T) {
 // a user does not affect the household's transaction history. A second household
 // member (B) can still retrieve history created by A after A deactivates.
 func TestE2E_Workflow_UserDeactivation_HistoryPreserved(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -409,6 +415,7 @@ func TestE2E_Workflow_UserDeactivation_HistoryPreserved(t *testing.T) {
 // The guard checks membership (not household state), so sub-resources remain
 // accessible to existing members — this is the current designed behaviour.
 func TestE2E_Workflow_HouseholdDeactivation_AccountsInaccessible(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 
@@ -439,6 +446,7 @@ func TestE2E_Workflow_HouseholdDeactivation_AccountsInaccessible(t *testing.T) {
 // TestE2E_Workflow_MemberRemoval_AccessRevoked verifies EDGE-3: a removed member
 // can no longer access any household-scoped resources.
 func TestE2E_Workflow_MemberRemoval_AccessRevoked(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	env := newE2EEnv(t, ctx)
 

@@ -68,8 +68,9 @@ func balancedLedgerInput(debitAcct, creditAcct uuid.UUID) ledger.PostTransaction
 // ---------------------------------------------------------------------------
 
 func TestLedgerRepo_PostTransaction_StoresTransactionAndEntries(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewLedgerRepo(pool)
 	householdID, acct1, acct2 := insertTwoAccountsSameHousehold(t, pool)
 
@@ -83,8 +84,9 @@ func TestLedgerRepo_PostTransaction_StoresTransactionAndEntries(t *testing.T) {
 }
 
 func TestLedgerRepo_PostTransaction_UpdatesAccountBalances(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewLedgerRepo(pool)
 	householdID, acct1, acct2 := insertTwoAccountsSameHousehold(t, pool)
 
@@ -101,8 +103,9 @@ func TestLedgerRepo_PostTransaction_UpdatesAccountBalances(t *testing.T) {
 }
 
 func TestLedgerRepo_PostTransaction_Atomic_RollbackOnFailure(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewLedgerRepo(pool)
 	tx := database.NewPostgresTransactor(pool)
 	householdID, acct1, acct2 := insertTwoAccountsSameHousehold(t, pool)
@@ -125,8 +128,9 @@ func TestLedgerRepo_PostTransaction_Atomic_RollbackOnFailure(t *testing.T) {
 }
 
 func TestLedgerRepo_PostTransaction_UnbalancedFails(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewLedgerRepo(pool)
 	householdID, acct1, acct2 := insertTwoAccountsSameHousehold(t, pool)
 
@@ -150,8 +154,9 @@ func TestLedgerRepo_PostTransaction_UnbalancedFails(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestLedgerRepo_GetBalance_ZeroForNewAccount(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewLedgerRepo(pool)
 	acctID := insertTestAccountForLedger(t, pool)
 
@@ -162,8 +167,9 @@ func TestLedgerRepo_GetBalance_ZeroForNewAccount(t *testing.T) {
 }
 
 func TestLedgerRepo_GetBalance_AccumulatesMultipleTransactions(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewLedgerRepo(pool)
 	householdID, acct1, acct2 := insertTwoAccountsSameHousehold(t, pool)
 
@@ -182,8 +188,9 @@ func TestLedgerRepo_GetBalance_AccumulatesMultipleTransactions(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestLedgerRepo_GetTransactionHistory_ReturnsTransactionsForAccount(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewLedgerRepo(pool)
 	householdID, acct1, acct2 := insertTwoAccountsSameHousehold(t, pool)
 
@@ -200,8 +207,9 @@ func TestLedgerRepo_GetTransactionHistory_ReturnsTransactionsForAccount(t *testi
 }
 
 func TestLedgerRepo_GetTransactionHistory_Pagination(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewLedgerRepo(pool)
 	householdID, acct1, acct2 := insertTwoAccountsSameHousehold(t, pool)
 
@@ -218,8 +226,9 @@ func TestLedgerRepo_GetTransactionHistory_Pagination(t *testing.T) {
 }
 
 func TestLedgerRepo_GetTransactionHistory_NoFilter_AllHouseholdTransactions(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
-	pool := newTestPool(t, ctx)
+	pool := sharedDB.NewPool(t, ctx)
 	repo := postgres.NewLedgerRepo(pool)
 	householdID, acct1, acct2 := insertTwoAccountsSameHousehold(t, pool)
 

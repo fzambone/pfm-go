@@ -14,6 +14,7 @@ import (
 // TestCreditCardSettingsMigration_ReferencesOneAccount verifies AC1: credit card settings
 // reference exactly one account via account_id FK.
 func TestCreditCardSettingsMigration_ReferencesOneAccount(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -51,6 +52,7 @@ func TestCreditCardSettingsMigration_ReferencesOneAccount(t *testing.T) {
 // TestCreditCardSettingsMigration_UniquePerAccount verifies AC2: a second set of settings
 // for the same account is rejected by the unique constraint on account_id.
 func TestCreditCardSettingsMigration_UniquePerAccount(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -90,6 +92,7 @@ func TestCreditCardSettingsMigration_UniquePerAccount(t *testing.T) {
 // TestCreditCardSettingsMigration_ClosingDayRange verifies AC3 + EC1: closing_day must be
 // between 1 and 31 inclusive. Tests boundary violations at 0 and 32.
 func TestCreditCardSettingsMigration_ClosingDayRange(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -138,6 +141,7 @@ func TestCreditCardSettingsMigration_ClosingDayRange(t *testing.T) {
 // TestCreditCardSettingsMigration_DueDayRange verifies AC4 + EC2: due_day must be
 // between 1 and 31 inclusive.
 func TestCreditCardSettingsMigration_DueDayRange(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -186,6 +190,7 @@ func TestCreditCardSettingsMigration_DueDayRange(t *testing.T) {
 // TestCreditCardSettingsMigration_LimitAmountIsBigint verifies AC5 + EC4: limit_amount
 // is stored as BIGINT (minor units) and accepts large values without precision loss.
 func TestCreditCardSettingsMigration_LimitAmountIsBigint(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -225,6 +230,7 @@ func TestCreditCardSettingsMigration_LimitAmountIsBigint(t *testing.T) {
 // TestCreditCardSettingsMigration_RollbackRemovesTable verifies AC6: rolling back the
 // credit_card_settings migration drops the table cleanly.
 func TestCreditCardSettingsMigration_RollbackRemovesTable(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	sub := usersMigrationsFS(t)

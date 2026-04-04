@@ -29,6 +29,7 @@ var testPasswordHash = strings.Repeat("x", 128)
 // TestUsersMigration_UUIDGeneratedByDB verifies AC1: the database generates a UUIDv7
 // when a user is inserted without an explicit id.
 func TestUsersMigration_UUIDGeneratedByDB(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -47,6 +48,7 @@ func TestUsersMigration_UUIDGeneratedByDB(t *testing.T) {
 // TestUsersMigration_EmailUniquenessEnforced verifies AC2: inserting two active users
 // with the same email (case-insensitive) is rejected by the database.
 func TestUsersMigration_EmailUniquenessEnforced(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -68,6 +70,7 @@ func TestUsersMigration_EmailUniquenessEnforced(t *testing.T) {
 // TestUsersMigration_SoftDeleteAllowsEmailReuse verifies AC3: after a user is soft-deleted,
 // the same email can be registered again.
 func TestUsersMigration_SoftDeleteAllowsEmailReuse(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -96,6 +99,7 @@ func TestUsersMigration_SoftDeleteAllowsEmailReuse(t *testing.T) {
 // TestUsersMigration_TimestampsSetOnCreate verifies AC4: created_at and updated_at are
 // populated automatically when a row is inserted.
 func TestUsersMigration_TimestampsSetOnCreate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -119,6 +123,7 @@ func TestUsersMigration_TimestampsSetOnCreate(t *testing.T) {
 // TestUsersMigration_CreatedAtImmutableOnUpdate verifies AC5: updating a row must not
 // change created_at — only updated_at is allowed to change.
 func TestUsersMigration_CreatedAtImmutableOnUpdate(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -154,6 +159,7 @@ func TestUsersMigration_CreatedAtImmutableOnUpdate(t *testing.T) {
 
 // TestUsersMigration_VersionStartsAtOne verifies AC6: every new row has version = 1.
 func TestUsersMigration_VersionStartsAtOne(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	require.NoError(t, Migrate(ctx, db, usersMigrationsFS(t)))
@@ -176,6 +182,7 @@ func TestUsersMigration_VersionStartsAtOne(t *testing.T) {
 // TestUsersMigration_RollbackRemovesTable verifies AC7: running the Down migration
 // drops the users table and all its indexes cleanly.
 func TestUsersMigration_RollbackRemovesTable(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	db := newTestDB(t, ctx)
 	sub := usersMigrationsFS(t)

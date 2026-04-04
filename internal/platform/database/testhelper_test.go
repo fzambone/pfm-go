@@ -5,116 +5,71 @@ package database
 import (
 	"context"
 	"database/sql"
-	"io/fs"
+	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
-	pfmdb "github.com/zambone/pfm-go/db"
-	"github.com/zambone/pfm-go/internal/platform/config"
 )
 
-// newTestDb spins up a real Postgres container and returns an open *sql.DB.
-// Each call creates an isolated container - tests never share state.
+// newTestDB creates an isolated per-test database (no migrations) cloned from
+// the admin connection. The caller is expected to run migrations inside the test.
+// The database is dropped in t.Cleanup.
 func newTestDB(t *testing.T, ctx context.Context) *sql.DB {
 	t.Helper()
 
-	ctr, err := postgres.Run(ctx,
-		"postgres:18-alpine3.23",
-		postgres.WithDatabase("testdb"),
-		postgres.WithUsername("testuser"),
-		postgres.WithPassword("testpass"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2),
-		),
-	)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = ctr.Terminate(ctx) })
+	dbName := "test_" + strings.ReplaceAll(uuid.New().String(), "-", "")
+	conn := dbAdminConn(ctx)
+	dbAdminExec(ctx, conn, fmt.Sprintf(`CREATE DATABASE %s`, dbName))
+	conn.Close(ctx)
 
-	host, err := ctr.Host(ctx)
-	require.NoError(t, err)
-	mappedPort, err := ctr.MappedPort(ctx, "5432")
-	require.NoError(t, err)
+	t.Cleanup(func() {
+		dropCtx := context.Background()
+		dropConn := dbAdminConn(dropCtx)
+		defer dropConn.Close(dropCtx)
+		_, _ = dropConn.Exec(dropCtx, // best-effort
+			`SELECT pg_terminate_backend(pid) FROM pg_stat_activity `+
+				`WHERE datname = $1 AND pid <> pg_backend_pid()`,
+			dbName,
+		)
+		_, _ = dropConn.Exec(dropCtx, fmt.Sprintf(`DROP DATABASE IF EXISTS %s`, dbName)) // best-effort
+	})
 
-	cfg := &config.Config{
-		DatabaseHost:           host,
-		DatabasePort:           mappedPort.Int(),
-		DatabaseName:           "testdb",
-		DatabaseUser:           "testuser",
-		DatabasePassword:       "testpass",
-		DatabaseSSLMode:        "disable",
-		DBConnectTimeoutSec:    5,
-		DBStartupRetries:       3,
-		DBStartupRetryDelaySec: 1,
-		DBMaxOpenConns:         5,
-		DBMaxIdleConns:         2,
-		DBConnMaxLifetimeSec:   60,
-		DBConnMaxIdleTimeSec:   30,
-	}
-
-	db, err := Open(ctx, cfg)
+	db, err := Open(ctx, dbURLToConfig(dbReplaceDBName(dbAdminURL, dbName)))
 	require.NoError(t, err)
-	t.Cleanup(func() { _ = db.Close() })
+	t.Cleanup(func() { _ = db.Close() }) // best-effort
 
 	return db
 }
 
-// newTestPool spins up a real Postgres container, runs all migrations, and returns
-// a *pgxpool.Pool connected to it. Used by transactor integration tests.
-// Each call creates an isolated container — tests never share state.
+// newTestPool creates an isolated per-test database cloned from pfm_template
+// (which has all migrations applied) and returns a *pgxpool.Pool connected to it.
+// The database is dropped in t.Cleanup.
 func newTestPool(t *testing.T, ctx context.Context) *pgxpool.Pool {
 	t.Helper()
 
-	ctr, err := postgres.Run(ctx,
-		"postgres:18-alpine3.23",
-		postgres.WithDatabase("testdb"),
-		postgres.WithUsername("testuser"),
-		postgres.WithPassword("testpass"),
-		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2),
-		),
-	)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = ctr.Terminate(ctx) })
+	dbName := "test_" + strings.ReplaceAll(uuid.New().String(), "-", "")
+	conn := dbAdminConn(ctx)
+	dbAdminExec(ctx, conn, fmt.Sprintf(`CREATE DATABASE %s TEMPLATE %s`, dbName, dbTemplateDB))
+	conn.Close(ctx)
 
-	host, err := ctr.Host(ctx)
-	require.NoError(t, err)
-	mappedPort, err := ctr.MappedPort(ctx, "5432")
-	require.NoError(t, err)
+	t.Cleanup(func() {
+		dropCtx := context.Background()
+		dropConn := dbAdminConn(dropCtx)
+		defer dropConn.Close(dropCtx)
+		_, _ = dropConn.Exec(dropCtx, // best-effort
+			`SELECT pg_terminate_backend(pid) FROM pg_stat_activity `+
+				`WHERE datname = $1 AND pid <> pg_backend_pid()`,
+			dbName,
+		)
+		_, _ = dropConn.Exec(dropCtx, fmt.Sprintf(`DROP DATABASE IF EXISTS %s`, dbName)) // best-effort
+	})
 
-	cfg := &config.Config{
-		DatabaseHost:           host,
-		DatabasePort:           mappedPort.Int(),
-		DatabaseName:           "testdb",
-		DatabaseUser:           "testuser",
-		DatabasePassword:       "testpass",
-		DatabaseSSLMode:        "disable",
-		DBConnectTimeoutSec:    5,
-		DBStartupRetries:       3,
-		DBStartupRetryDelaySec: 1,
-		DBMaxOpenConns:         5,
-		DBMaxIdleConns:         2,
-		DBConnMaxLifetimeSec:   60,
-		DBConnMaxIdleTimeSec:   30,
-	}
-
-	// Run migrations using the database/sql adapter (required by goose).
-	sqlDB, err := Open(ctx, cfg)
+	pool, err := NewPool(ctx, dbURLToConfig(dbReplaceDBName(dbAdminURL, dbName)))
 	require.NoError(t, err)
-	sub, err := fs.Sub(pfmdb.Migrations, "migrations")
-	require.NoError(t, err)
-	require.NoError(t, Migrate(ctx, sqlDB, sub))
-	require.NoError(t, sqlDB.Close())
-
-	// Open the pgx-native pool for application use.
-	pool, err := NewPool(ctx, cfg)
-	require.NoError(t, err)
-	t.Cleanup(func() { pool.Close() })
+	t.Cleanup(pool.Close)
 
 	return pool
 }
