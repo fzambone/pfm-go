@@ -1,6 +1,9 @@
 # Merge-to-main full quality gate — triggers on every push to main (PR merge,
-# rebase, or admin direct push). Runs the complete suite: lint, unit tests,
-# integration tests (GitHub Actions Postgres service container + real SQL), and build.
+# rebase, or admin direct push). Runs: lint, integration tests (GitHub Actions
+# Postgres service container + real SQL), and build. Unit tests are omitted here
+# because the PR gate already enforces them before merge, and the integration step
+# (go test -tags integration ./...) runs unit tests for every non-integration
+# package as a side-effect anyway.
 # Deployment workflows may only trigger after this gate passes.
 # All action versions are pinned; no `latest` references.
 
@@ -47,9 +50,6 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.10.1
-
-      - name: Test (unit)
-        run: go test -race -count=1 ./...
 
       - name: Test (integration)
         env:
