@@ -149,6 +149,35 @@ func (a *e2eHouseholdUserCreator) Create(ctx context.Context, input domainhouseh
 	return domainhousehold.CreatedUser{ID: u.ID, Email: u.Email, DisplayName: u.DisplayName}, nil
 }
 
+// bootstrapUser inserts a user directly via SQL and logs in via HTTP to obtain a
+// real PASETO token. Unlike bootstrapAdmin, it creates NO household or membership —
+// the user starts with a clean slate. Use this for tests that need an authenticated
+// user but control their own household state.
+func (e *e2eEnv) bootstrapUser(t *testing.T, ctx context.Context, email, displayName, password string) (token, userID string) {
+	t.Helper()
+
+	hash, err := e.hasher.Hash(ctx, password)
+	require.NoError(t, err, "bootstrap: hash password")
+
+	var uid string
+	err = e.pool.QueryRow(ctx, `
+		INSERT INTO users (email, display_name, password_hash, created_by, updated_by)
+		VALUES ($1, $2, $3, NULL, NULL)
+		RETURNING id::text
+	`, email, displayName, hash).Scan(&uid)
+	require.NoError(t, err, "bootstrap: insert user")
+
+	w := e.do(t, http.MethodPost, "/auth/login", map[string]string{
+		"email": email, "password": password,
+	}, "")
+	require.Equal(t, http.StatusOK, w.Code, "bootstrap: login failed: %s", w.Body.String())
+	login := decodeJSON(t, w)
+	token = login["token"].(string)
+	require.NotEmpty(t, token, "bootstrap: empty token")
+
+	return token, uid
+}
+
 // bootstrapAdmin inserts the first user + household + membership directly via SQL
 // (bypassing the HTTP layer, which requires auth for user creation), then logs in
 // via HTTP to obtain a real PASETO token.

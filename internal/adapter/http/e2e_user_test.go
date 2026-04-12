@@ -22,8 +22,7 @@ import (
 func registerAndLogin(t *testing.T, env *e2eEnv, email, displayName, password string) (token string, userID string) {
 	t.Helper()
 	ctx := context.Background()
-	token, userID, _ = env.bootstrapAdmin(t, ctx, email, displayName, password)
-	return token, userID
+	return env.bootstrapUser(t, ctx, email, displayName, password)
 }
 
 // --- Household-scoped user creation E2E tests ---
