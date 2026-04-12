@@ -255,6 +255,25 @@ func (r *UserRepo) ChangePassword(ctx context.Context, id uuid.UUID, newHash str
 	}, nil
 }
 
+// AnyExists reports whether at least one active (non-deleted) user row exists in the database.
+// Used by the seed tool to detect an already-bootstrapped environment.
+func (r *UserRepo) AnyExists(ctx context.Context) (bool, error) {
+	ctx, span := otel.Tracer("postgres").Start(ctx, "UserRepo.AnyExists")
+	defer span.End()
+
+	db := database.DBTXFromContext(ctx, r.pool)
+	exists, err := New(db).AnyUserExists(ctx)
+	if err != nil {
+		err = fmt.Errorf("user: any exists: %w", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return false, err
+	}
+
+	span.SetStatus(codes.Ok, "")
+	return exists, nil
+}
+
 // Deactivate soft-deletes the user. Idempotent — deactivating an already-deactivated
 // or non-existent user is not an error.
 func (r *UserRepo) Deactivate(ctx context.Context, id uuid.UUID, callerID uuid.UUID) error {

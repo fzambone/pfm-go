@@ -131,3 +131,31 @@ func TestRules_SafeOnUnexpectedTypes(t *testing.T) {
 		r.Field("g", 123, validate.OneOf("a", "b"))
 	})
 }
+
+func TestField_Email_AcceptsValidAddresses(t *testing.T) {
+	cases := []string{
+		"user@example.com",
+		"user+tag@example.co.uk",
+		"first.last@subdomain.example.com",
+	}
+	for _, addr := range cases {
+		r := validate.NewResult()
+		r.Field("email", addr, validate.Email)
+		assert.False(t, r.HasViolations(), "expected %q to be valid", addr)
+	}
+}
+
+func TestField_Email_RejectsInvalidAddresses(t *testing.T) {
+	cases := []string{
+		"notanemail",
+		"missing-at-sign",
+		"@nodomain",
+		"nolocal@",
+		"",
+	}
+	for _, addr := range cases {
+		r := validate.NewResult()
+		r.Field("email", addr, validate.Email)
+		assert.True(t, r.HasViolations(), "expected %q to be invalid", addr)
+	}
+}

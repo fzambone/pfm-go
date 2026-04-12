@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/zambone/pfm-go/internal/message"
 )
@@ -110,6 +111,25 @@ func NonNegative(value any) string {
 		if v < 0 {
 			return message.MsgNonNegative
 		}
+	}
+	return ""
+}
+
+// Email rejects strings that do not contain exactly one '@' with a non-empty
+// local part and a non-empty domain containing at least one '.'.
+// This is a lightweight structural check — not full RFC 5322 compliance.
+func Email(value any) string {
+	s, ok := value.(string)
+	if !ok {
+		return ""
+	}
+	at := strings.LastIndex(s, "@")
+	if at <= 0 {
+		return message.MsgEmail
+	}
+	domain := s[at+1:]
+	if domain == "" || !strings.Contains(domain, ".") {
+		return message.MsgEmail
 	}
 	return ""
 }
