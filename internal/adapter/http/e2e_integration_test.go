@@ -163,10 +163,12 @@ func (e *e2eEnv) bootstrapAdmin(t *testing.T, ctx context.Context, email, displa
 	require.NoError(t, err, "bootstrap: hash password")
 
 	// Insert admin user directly into the DB.
+	// created_by and updated_by are nullable FKs — NULL is correct for a seed user
+	// that has no creator (mirrors what the production seed binary will do, see #182).
 	var uid string
 	err = e.pool.QueryRow(ctx, `
 		INSERT INTO users (email, display_name, password_hash, created_by, updated_by)
-		VALUES ($1, $2, $3, gen_random_uuid(), gen_random_uuid())
+		VALUES ($1, $2, $3, NULL, NULL)
 		RETURNING id::text
 	`, email, displayName, hash).Scan(&uid)
 	require.NoError(t, err, "bootstrap: insert user")
