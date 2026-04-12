@@ -23,6 +23,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -o pfm \
     ./cmd/pfm
 
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s" \
+    -o pfm-seed \
+    ./cmd/pfm-seed
+
 # Runtime stage
 FROM alpine:3.23
 
@@ -33,11 +38,12 @@ RUN apk add --no-cache ca-certificates tzdata && \
 
 WORKDIR /app
 
-# Copy binary from builder
+# Copy binaries from builder
 COPY --from=builder /build/pfm .
+COPY --from=builder /build/pfm-seed .
 
 # Set ownership
-RUN chown pfm:pfm /app/pfm
+RUN chown pfm:pfm /app/pfm /app/pfm-seed
 
 # Switch to non-root user
 USER pfm
