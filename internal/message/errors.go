@@ -21,6 +21,7 @@ const (
 	MsgOneOf       = "must be one of %v"
 	MsgPositive    = "must be positive"
 	MsgNonNegative = "must not be negative"
+	MsgEmail       = "must be a valid email address"
 )
 
 // Config errors.
@@ -328,4 +329,18 @@ const (
 	ErrRunOpenDB     = "open database: %w"
 	ErrRunMigrate    = "run migrations: %w"
 	ErrRunTokenKey   = "init token service: %w"
+)
+
+// Seed tool messages and errors (used by cmd/pfm-seed).
+const (
+	MsgSeedStarting        = "starting seed tool"
+	MsgSeedAlreadySeeded   = "database already contains users — skipping seed"
+	MsgSeedSuccess         = "seed complete"
+	ErrSeedConfig          = "seed config: %w"
+	ErrSeedCheckExists     = "seed: check existing users: %w"
+	ErrSeedHashPassword    = "seed: hash password: %w"
+	ErrSeedCreateUser      = "seed: create user: %w"
+	ErrSeedCreateHousehold = "seed: create household: %w"
+	ErrSeedAddMember       = "seed: add admin member: %w"
+	ErrSeedTransaction     = "seed: transaction: %w"
 )

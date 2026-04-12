@@ -358,3 +358,37 @@ func TestUserRepo_Deactivate_IsIdempotent(t *testing.T) {
 	require.NoError(t, repo.Deactivate(ctx, created.ID, integCallerID))
 	assert.NoError(t, repo.Deactivate(ctx, created.ID, integCallerID), "second deactivate must not error")
 }
+
+// AnyExists
+// ---------------------------------------------------------------------------
+
+// TestUserRepo_AnyExists_ReturnsFalseOnEmptyDB verifies that an empty database
+// reports no existing users.
+func TestUserRepo_AnyExists_ReturnsFalseOnEmptyDB(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	pool := sharedDB.NewPool(t, ctx)
+	repo := postgres.NewUserRepo(pool)
+
+	exists, err := repo.AnyExists(ctx)
+
+	require.NoError(t, err)
+	assert.False(t, exists, "empty database must have no users")
+}
+
+// TestUserRepo_AnyExists_ReturnsTrueAfterCreate verifies that creating a user
+// causes AnyExists to return true.
+func TestUserRepo_AnyExists_ReturnsTrueAfterCreate(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	pool := sharedDB.NewPool(t, ctx)
+	repo := postgres.NewUserRepo(pool)
+
+	_, err := repo.Create(ctx, integRegisterInput("any-exists@example.com"), integTestPasswordHash, integCallerID)
+	require.NoError(t, err)
+
+	exists, err := repo.AnyExists(ctx)
+
+	require.NoError(t, err)
+	assert.True(t, exists, "database with a user must report exists=true")
+}

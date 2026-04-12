@@ -12,6 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const anyUserExists = `-- name: AnyUserExists :one
+SELECT EXISTS(SELECT 1 FROM users WHERE deleted_at IS NULL) AS exists
+`
+
+func (q *Queries) AnyUserExists(ctx context.Context) (bool, error) {
+	row := q.db.QueryRow(ctx, anyUserExists)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const changeUserPassword = `-- name: ChangeUserPassword :one
 UPDATE users
 SET password_hash = $1,

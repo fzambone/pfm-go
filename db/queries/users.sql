@@ -50,3 +50,6 @@ SET deleted_at = NOW(),
     updated_by = sqlc.arg('updated_by')
 WHERE id       = sqlc.arg('id')
   AND deleted_at IS NULL;
+
+-- name: AnyUserExists :one
+SELECT EXISTS(SELECT 1 FROM users WHERE deleted_at IS NULL) AS exists;
