@@ -37,14 +37,14 @@ type RouteDeps struct {
 
 	// User handlers
 	LoginSvc          loginService
-	RegisterSvc       registerService
 	GetUserSvc        getUserService
 	UpdateProfileSvc  updateProfileService
 	ChangePasswordSvc changePasswordService
 	DeactivateUserSvc deactivateUserService
 
 	// Household handlers
-	CreateHouseholdSvc     createHouseholdService
+	CreateHouseholdSvc      createHouseholdService
+	CreateHouseholdUserSvc  createHouseholdUserService
 	GetHouseholdSvc        getHouseholdService
 	ListHouseholdsSvc      listHouseholdsService
 	AddMemberSvc           addMemberService
@@ -94,10 +94,7 @@ func RegisterRoutes(mux *http.ServeMux, d RouteDeps) {
 	// --- Auth (public) ---
 	mux.Handle("POST /auth/login", LoginHandler(d.LoginSvc))
 
-	// --- Users ---
-	// Registration is public (no auth needed to create an account).
-	mux.Handle("POST /api/v1/users", RegisterHandler(d.RegisterSvc))
-	// All other user endpoints require authentication.
+	// --- Users (all require authentication) ---
 	mux.Handle("GET /api/v1/users/{id}", authn(GetUserHandler(d.GetUserSvc)))
 	mux.Handle("PUT /api/v1/users/{id}", authn(UpdateProfileHandler(d.UpdateProfileSvc)))
 	mux.Handle("PUT /api/v1/users/{id}/password", authn(ChangePasswordHandler(d.ChangePasswordSvc)))
@@ -112,7 +109,9 @@ func RegisterRoutes(mux *http.ServeMux, d RouteDeps) {
 	mux.Handle("PUT /api/v1/households/{household_id}", authn(adminGuard(UpdateHouseholdNameHandler(d.UpdateHouseholdNameSvc))))
 	mux.Handle("DELETE /api/v1/households/{household_id}", authn(adminGuard(DeactivateHouseholdHandler(d.DeactivateHouseholdSvc))))
 
-	// --- Members ---
+	// --- Members and household-scoped user creation ---
+	// Creating a user within a household requires auth + admin role.
+	mux.Handle("POST /api/v1/households/{household_id}/users", authn(adminGuard(CreateHouseholdUserHandler(d.CreateHouseholdUserSvc))))
 	mux.Handle("POST /api/v1/households/{household_id}/members", authn(adminGuard(AddMemberHandler(d.AddMemberSvc))))
 	mux.Handle("DELETE /api/v1/households/{household_id}/members/{user_id}", authn(adminGuard(RemoveMemberHandler(d.RemoveMemberSvc))))
 

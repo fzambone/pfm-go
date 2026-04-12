@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,6 +12,7 @@ import (
 	domainhouse "github.com/zambone/pfm-go/internal/domain/household"
 	"github.com/zambone/pfm-go/internal/message"
 	"github.com/zambone/pfm-go/internal/platform/ctxutil"
+	"github.com/zambone/pfm-go/internal/platform/validate"
 	"github.com/zambone/pfm-go/internal/types"
 )
 
@@ -351,6 +353,98 @@ func UpdateHouseholdNameHandler(svc updateHouseholdNameService) http.HandlerFunc
 		}
 
 		WriteJSON(w, http.StatusOK, toHouseholdResponse(h))
+	}
+}
+
+// --- CreateHouseholdUser ---
+
+// createHouseholdUserService is the narrow interface required by CreateHouseholdUserHandler.
+// Structurally satisfied by HouseholdMemberLogic.
+type createHouseholdUserService interface {
+	CreateHouseholdUser(ctx context.Context, householdID uuid.UUID, input domainhouse.NewUserInput, callerID uuid.UUID) (domainhouse.CreatedMember, error)
+}
+
+// createHouseholdUserRequest carries the caller-supplied fields for creating a new user
+// within a household.
+type createHouseholdUserRequest struct {
+	Email       string `json:"email"`
+	DisplayName string `json:"display_name"`
+	Password    string `json:"password"`
+}
+
+// createdHouseholdUserResponse is the JSON representation of a newly created household user.
+// It deliberately omits sensitive fields (PasswordHash) and internal audit fields.
+type createdHouseholdUserResponse struct {
+	ID          string `json:"id"`
+	Email       string `json:"email"`
+	DisplayName string `json:"display_name"`
+}
+
+// CreateHouseholdUserHandler returns an http.HandlerFunc that creates a new user and
+// atomically adds them as a MEMBER of the given household. Requires an authenticated
+// caller who is an admin of the household (enforced by adminGuard middleware upstream).
+// On success it writes a 201 Created response with the new user and a Location header.
+// Panics if svc is nil.
+//
+// @Summary Create a user within a household
+// @Tags households
+// @Accept json
+// @Produce json
+// @Param household_id path string true "Household ID (UUID)"
+// @Param body body createHouseholdUserRequest true "New user input"
+// @Success 201 {object} createdHouseholdUserResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 403 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Security BearerAuth
+// @Router /api/v1/households/{household_id}/users [post]
+func CreateHouseholdUserHandler(svc createHouseholdUserService) http.HandlerFunc {
+	if svc == nil {
+		panic("http: CreateHouseholdUserHandler requires non-nil createHouseholdUserService")
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		householdID, err := parseUUID(r.PathValue("household_id"))
+		if err != nil {
+			WriteJSON(w, http.StatusBadRequest, map[string]string{"error": message.MsgAuthzBadRequest})
+			return
+		}
+
+		var req createHouseholdUserRequest
+		if err := DecodeBody(r, &req); err != nil {
+			WriteJSON(w, http.StatusBadRequest, map[string]string{"error": message.MsgBadRequestBody})
+			return
+		}
+
+		v := validate.NewResult()
+		v.Field("email", req.Email, validate.Required)
+		v.Field("password", req.Password, validate.Required)
+		if err := v.Error(); err != nil {
+			var ve *validate.ValidationError
+			if errors.As(err, &ve) {
+				WriteValidationError(w, ve)
+				return
+			}
+		}
+
+		callerID, _ := ctxutil.UserID(r.Context())
+
+		created, err := svc.CreateHouseholdUser(r.Context(), householdID, domainhouse.NewUserInput{
+			Email:       req.Email,
+			DisplayName: req.DisplayName,
+			Password:    req.Password,
+		}, callerID)
+		if err != nil {
+			handleDomainError(w, r, err)
+			return
+		}
+
+		location := fmt.Sprintf("/api/v1/users/%s", created.User.ID)
+		WriteCreated(w, location, createdHouseholdUserResponse{
+			ID:          created.User.ID.String(),
+			Email:       created.User.Email,
+			DisplayName: created.User.DisplayName,
+		})
 	}
 }
 

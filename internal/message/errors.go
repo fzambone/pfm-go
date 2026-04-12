@@ -220,6 +220,7 @@ const (
 	ErrHouseholdLogicRemoveMember = "household logic: remove member: %w"
 	ErrHouseholdLogicUpdateName   = "household logic: update name: %w"
 	ErrHouseholdLogicDeactivate   = "household logic: deactivate: %w"
+	ErrHouseholdLogicCreateUser   = "household logic: create household user: %w"
 )
 
 // Account repository errors.

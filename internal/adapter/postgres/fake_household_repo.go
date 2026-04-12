@@ -42,6 +42,35 @@ func NewFakeHouseholdRepository() *FakeHouseholdRepository {
 	}
 }
 
+// AddHousehold seeds a household with the given ID directly into the in-memory store.
+// Use this in tests to set up preconditions without going through the domain Create method.
+func (f *FakeHouseholdRepository) AddHousehold(id uuid.UUID, callerID uuid.UUID) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.byID[id] = household.Household{
+		ID:        id,
+		Name:      "test household",
+		Status:    "ACTIVE",
+		Version:   1,
+		CreatedBy: callerID,
+		UpdatedBy: callerID,
+	}
+}
+
+// AddMemberDirect seeds a membership directly into the in-memory store.
+// Use this in tests to set up preconditions (e.g. to trigger ErrHouseholdMemberExists).
+func (f *FakeHouseholdRepository) AddMemberDirect(householdID, userID, inviterID uuid.UUID) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	key := memberKey{HouseholdID: householdID, UserID: userID}
+	f.members[key] = household.Membership{
+		HouseholdID: householdID,
+		UserID:      userID,
+		Role:        "MEMBER",
+		InvitedBy:   inviterID,
+	}
+}
+
 // SetError configures every subsequent method call to return err.
 // Pass nil to clear the injected error.
 func (f *FakeHouseholdRepository) SetError(err error) {
