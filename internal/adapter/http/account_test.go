@@ -47,12 +47,12 @@ func testAccount() domainacct.Account {
 
 // --- CreateAccountHandler tests ---
 
-type stubCreateAccountService struct {
+type FakeCreateAccountService struct {
 	account domainacct.Account
 	err     error
 }
 
-func (s *stubCreateAccountService) Create(_ context.Context, _ uuid.UUID, _ domainacct.CreateInput, _ uuid.UUID) (domainacct.Account, error) {
+func (s *FakeCreateAccountService) Create(_ context.Context, _ uuid.UUID, _ domainacct.CreateInput, _ uuid.UUID) (domainacct.Account, error) {
 	return s.account, s.err
 }
 
@@ -60,7 +60,7 @@ func (s *stubCreateAccountService) Create(_ context.Context, _ uuid.UUID, _ doma
 func TestCreateAccountHandler_ValidRequest_Returns201(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateAccountService{account: testAccount()}
+	svc := &FakeCreateAccountService{account: testAccount()}
 	handler := pfmhttp.CreateAccountHandler(svc)
 
 	body := `{"name":"Checking","account_type":"CHECKING","currency_code":"BRL"}`
@@ -84,7 +84,7 @@ func TestCreateAccountHandler_ValidRequest_Returns201(t *testing.T) {
 func TestCreateAccountHandler_NameTaken_Returns409(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateAccountService{err: message.ErrAccountNameTaken}
+	svc := &FakeCreateAccountService{err: message.ErrAccountNameTaken}
 	handler := pfmhttp.CreateAccountHandler(svc)
 
 	body := `{"name":"Dup","account_type":"CHECKING","currency_code":"BRL"}`
@@ -101,7 +101,7 @@ func TestCreateAccountHandler_NameTaken_Returns409(t *testing.T) {
 func TestCreateAccountHandler_ValidationError_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateAccountService{
+	svc := &FakeCreateAccountService{
 		err: &validate.ValidationError{
 			Violations: []validate.Violation{{Field: "name", Message: "is required"}},
 		},
@@ -122,7 +122,7 @@ func TestCreateAccountHandler_ValidationError_Returns400(t *testing.T) {
 func TestCreateAccountHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateAccountService{}
+	svc := &FakeCreateAccountService{}
 	handler := pfmhttp.CreateAccountHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/households/"+acctHouseID.String()+"/accounts", strings.NewReader("{bad"))
@@ -141,12 +141,12 @@ func TestCreateAccountHandler_NilService_Panics(t *testing.T) {
 
 // --- GetAccountHandler tests ---
 
-type stubGetAccountService struct {
+type FakeGetAccountService struct {
 	account domainacct.Account
 	err     error
 }
 
-func (s *stubGetAccountService) FindByID(_ context.Context, _ uuid.UUID) (domainacct.Account, error) {
+func (s *FakeGetAccountService) FindByID(_ context.Context, _ uuid.UUID) (domainacct.Account, error) {
 	return s.account, s.err
 }
 
@@ -154,7 +154,7 @@ func (s *stubGetAccountService) FindByID(_ context.Context, _ uuid.UUID) (domain
 func TestGetAccountHandler_ValidID_Returns200(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetAccountService{account: testAccount()}
+	svc := &FakeGetAccountService{account: testAccount()}
 	handler := pfmhttp.GetAccountHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/households/"+acctHouseID.String()+"/accounts/"+acctID.String(), nil)
@@ -172,7 +172,7 @@ func TestGetAccountHandler_ValidID_Returns200(t *testing.T) {
 func TestGetAccountHandler_NotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetAccountService{err: message.ErrAccountNotFound}
+	svc := &FakeGetAccountService{err: message.ErrAccountNotFound}
 	handler := pfmhttp.GetAccountHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -187,7 +187,7 @@ func TestGetAccountHandler_NotFound_Returns404(t *testing.T) {
 func TestGetAccountHandler_InvalidUUID_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetAccountService{}
+	svc := &FakeGetAccountService{}
 	handler := pfmhttp.GetAccountHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -206,12 +206,12 @@ func TestGetAccountHandler_NilService_Panics(t *testing.T) {
 
 // --- ListAccountsHandler tests ---
 
-type stubListAccountsService struct {
+type FakeListAccountsService struct {
 	accounts []domainacct.Account
 	err      error
 }
 
-func (s *stubListAccountsService) ListForHousehold(_ context.Context, _ uuid.UUID) ([]domainacct.Account, error) {
+func (s *FakeListAccountsService) ListForHousehold(_ context.Context, _ uuid.UUID) ([]domainacct.Account, error) {
 	return s.accounts, s.err
 }
 
@@ -219,7 +219,7 @@ func (s *stubListAccountsService) ListForHousehold(_ context.Context, _ uuid.UUI
 func TestListAccountsHandler_ReturnsArray(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubListAccountsService{accounts: []domainacct.Account{testAccount()}}
+	svc := &FakeListAccountsService{accounts: []domainacct.Account{testAccount()}}
 	handler := pfmhttp.ListAccountsHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -237,7 +237,7 @@ func TestListAccountsHandler_ReturnsArray(t *testing.T) {
 func TestListAccountsHandler_EmptyList_ReturnsEmptyArray(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubListAccountsService{accounts: []domainacct.Account{}}
+	svc := &FakeListAccountsService{accounts: []domainacct.Account{}}
 	handler := pfmhttp.ListAccountsHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -257,12 +257,12 @@ func TestListAccountsHandler_NilService_Panics(t *testing.T) {
 
 // --- UpdateAccountNameHandler tests ---
 
-type stubUpdateAccountNameService struct {
+type FakeUpdateAccountNameService struct {
 	account domainacct.Account
 	err     error
 }
 
-func (s *stubUpdateAccountNameService) UpdateName(_ context.Context, _ uuid.UUID, _ domainacct.UpdateNameInput, _ int, _ uuid.UUID) (domainacct.Account, error) {
+func (s *FakeUpdateAccountNameService) UpdateName(_ context.Context, _ uuid.UUID, _ domainacct.UpdateNameInput, _ int, _ uuid.UUID) (domainacct.Account, error) {
 	return s.account, s.err
 }
 
@@ -272,7 +272,7 @@ func TestUpdateAccountNameHandler_ValidRequest_Returns200(t *testing.T) {
 
 	updated := testAccount()
 	updated.Name = "Savings"
-	svc := &stubUpdateAccountNameService{account: updated}
+	svc := &FakeUpdateAccountNameService{account: updated}
 	handler := pfmhttp.UpdateAccountNameHandler(svc)
 
 	body := `{"name":"Savings","version":1}`
@@ -292,7 +292,7 @@ func TestUpdateAccountNameHandler_ValidRequest_Returns200(t *testing.T) {
 func TestUpdateAccountNameHandler_VersionConflict_Returns409(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubUpdateAccountNameService{err: message.ErrAccountVersionConflict}
+	svc := &FakeUpdateAccountNameService{err: message.ErrAccountVersionConflict}
 	handler := pfmhttp.UpdateAccountNameHandler(svc)
 
 	body := `{"name":"X","version":1}`
@@ -309,7 +309,7 @@ func TestUpdateAccountNameHandler_VersionConflict_Returns409(t *testing.T) {
 func TestUpdateAccountNameHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubUpdateAccountNameService{}
+	svc := &FakeUpdateAccountNameService{}
 	handler := pfmhttp.UpdateAccountNameHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPut, "/", strings.NewReader("{bad"))
@@ -328,12 +328,12 @@ func TestUpdateAccountNameHandler_NilService_Panics(t *testing.T) {
 
 // --- UpdateAccountBalanceHandler tests ---
 
-type stubUpdateAccountBalanceService struct {
+type FakeUpdateAccountBalanceService struct {
 	account domainacct.Account
 	err     error
 }
 
-func (s *stubUpdateAccountBalanceService) UpdateBalance(_ context.Context, _ uuid.UUID, _ domainacct.UpdateBalanceInput, _ int, _ uuid.UUID) (domainacct.Account, error) {
+func (s *FakeUpdateAccountBalanceService) UpdateBalance(_ context.Context, _ uuid.UUID, _ domainacct.UpdateBalanceInput, _ int, _ uuid.UUID) (domainacct.Account, error) {
 	return s.account, s.err
 }
 
@@ -343,7 +343,7 @@ func TestUpdateAccountBalanceHandler_ValidRequest_Returns200(t *testing.T) {
 
 	updated := testAccount()
 	updated.Balance = 50000
-	svc := &stubUpdateAccountBalanceService{account: updated}
+	svc := &FakeUpdateAccountBalanceService{account: updated}
 	handler := pfmhttp.UpdateAccountBalanceHandler(svc)
 
 	body := `{"balance":50000,"version":1}`
@@ -363,7 +363,7 @@ func TestUpdateAccountBalanceHandler_ValidRequest_Returns200(t *testing.T) {
 func TestUpdateAccountBalanceHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubUpdateAccountBalanceService{}
+	svc := &FakeUpdateAccountBalanceService{}
 	handler := pfmhttp.UpdateAccountBalanceHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPut, "/", strings.NewReader("{bad"))
@@ -382,11 +382,11 @@ func TestUpdateAccountBalanceHandler_NilService_Panics(t *testing.T) {
 
 // --- DeactivateAccountHandler tests ---
 
-type stubDeactivateAccountService struct {
+type FakeDeactivateAccountService struct {
 	err error
 }
 
-func (s *stubDeactivateAccountService) Deactivate(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
+func (s *FakeDeactivateAccountService) Deactivate(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
 	return s.err
 }
 
@@ -394,7 +394,7 @@ func (s *stubDeactivateAccountService) Deactivate(_ context.Context, _ uuid.UUID
 func TestDeactivateAccountHandler_Success_Returns204(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeactivateAccountService{}
+	svc := &FakeDeactivateAccountService{}
 	handler := pfmhttp.DeactivateAccountHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/", nil)
@@ -411,7 +411,7 @@ func TestDeactivateAccountHandler_Success_Returns204(t *testing.T) {
 func TestDeactivateAccountHandler_BalanceNotZero_ReturnsConflict(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeactivateAccountService{err: message.ErrAccountBalanceNotZero}
+	svc := &FakeDeactivateAccountService{err: message.ErrAccountBalanceNotZero}
 	handler := pfmhttp.DeactivateAccountHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/", nil)
@@ -427,7 +427,7 @@ func TestDeactivateAccountHandler_BalanceNotZero_ReturnsConflict(t *testing.T) {
 func TestDeactivateAccountHandler_NotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeactivateAccountService{err: message.ErrAccountNotFound}
+	svc := &FakeDeactivateAccountService{err: message.ErrAccountNotFound}
 	handler := pfmhttp.DeactivateAccountHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/", nil)

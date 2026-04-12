@@ -64,13 +64,13 @@ func testEntries() []domainledger.Entry {
 
 // --- PostTransactionHandler tests ---
 
-type stubPostTransactionService struct {
+type FakePostTransactionService struct {
 	txn     domainledger.Transaction
 	entries []domainledger.Entry
 	err     error
 }
 
-func (s *stubPostTransactionService) PostTransaction(_ context.Context, _ uuid.UUID, _ domainledger.PostTransactionInput, _ uuid.UUID) (domainledger.Transaction, []domainledger.Entry, error) {
+func (s *FakePostTransactionService) PostTransaction(_ context.Context, _ uuid.UUID, _ domainledger.PostTransactionInput, _ uuid.UUID) (domainledger.Transaction, []domainledger.Entry, error) {
 	return s.txn, s.entries, s.err
 }
 
@@ -78,7 +78,7 @@ func (s *stubPostTransactionService) PostTransaction(_ context.Context, _ uuid.U
 func TestPostTransactionHandler_ValidRequest_Returns201(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubPostTransactionService{txn: testTransaction(), entries: testEntries()}
+	svc := &FakePostTransactionService{txn: testTransaction(), entries: testEntries()}
 	handler := pfmhttp.PostTransactionHandler(svc)
 
 	body := `{
@@ -109,7 +109,7 @@ func TestPostTransactionHandler_ValidRequest_Returns201(t *testing.T) {
 func TestPostTransactionHandler_Unbalanced_Returns422(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubPostTransactionService{err: message.ErrLedgerUnbalanced}
+	svc := &FakePostTransactionService{err: message.ErrLedgerUnbalanced}
 	handler := pfmhttp.PostTransactionHandler(svc)
 
 	body := `{
@@ -132,7 +132,7 @@ func TestPostTransactionHandler_Unbalanced_Returns422(t *testing.T) {
 func TestPostTransactionHandler_ValidationError_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubPostTransactionService{
+	svc := &FakePostTransactionService{
 		err: &validate.ValidationError{
 			Violations: []validate.Violation{{Field: "description", Message: "is required"}},
 		},
@@ -153,7 +153,7 @@ func TestPostTransactionHandler_ValidationError_Returns400(t *testing.T) {
 func TestPostTransactionHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubPostTransactionService{}
+	svc := &FakePostTransactionService{}
 	handler := pfmhttp.PostTransactionHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{bad"))
@@ -172,12 +172,12 @@ func TestPostTransactionHandler_NilService_Panics(t *testing.T) {
 
 // --- GetBalanceHandler tests ---
 
-type stubGetBalanceService struct {
+type FakeGetBalanceService struct {
 	balance int64
 	err     error
 }
 
-func (s *stubGetBalanceService) GetBalance(_ context.Context, _ uuid.UUID) (int64, error) {
+func (s *FakeGetBalanceService) GetBalance(_ context.Context, _ uuid.UUID) (int64, error) {
 	return s.balance, s.err
 }
 
@@ -185,7 +185,7 @@ func (s *stubGetBalanceService) GetBalance(_ context.Context, _ uuid.UUID) (int6
 func TestGetBalanceHandler_ValidID_Returns200(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetBalanceService{balance: 15000}
+	svc := &FakeGetBalanceService{balance: 15000}
 	handler := pfmhttp.GetBalanceHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -205,7 +205,7 @@ func TestGetBalanceHandler_ValidID_Returns200(t *testing.T) {
 func TestGetBalanceHandler_ZeroBalance_Returns200(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetBalanceService{balance: 0}
+	svc := &FakeGetBalanceService{balance: 0}
 	handler := pfmhttp.GetBalanceHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -223,7 +223,7 @@ func TestGetBalanceHandler_ZeroBalance_Returns200(t *testing.T) {
 func TestGetBalanceHandler_NotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetBalanceService{err: message.ErrAccountNotFound}
+	svc := &FakeGetBalanceService{err: message.ErrAccountNotFound}
 	handler := pfmhttp.GetBalanceHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -238,7 +238,7 @@ func TestGetBalanceHandler_NotFound_Returns404(t *testing.T) {
 func TestGetBalanceHandler_InvalidUUID_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetBalanceService{}
+	svc := &FakeGetBalanceService{}
 	handler := pfmhttp.GetBalanceHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -257,12 +257,12 @@ func TestGetBalanceHandler_NilService_Panics(t *testing.T) {
 
 // --- GetTransactionHistoryHandler tests ---
 
-type stubGetHistoryService struct {
+type FakeGetHistoryService struct {
 	history []domainledger.TransactionWithEntries
 	err     error
 }
 
-func (s *stubGetHistoryService) GetTransactionHistory(_ context.Context, _ uuid.UUID, _ domainledger.HistoryQuery) ([]domainledger.TransactionWithEntries, error) {
+func (s *FakeGetHistoryService) GetTransactionHistory(_ context.Context, _ uuid.UUID, _ domainledger.HistoryQuery) ([]domainledger.TransactionWithEntries, error) {
 	return s.history, s.err
 }
 
@@ -270,7 +270,7 @@ func (s *stubGetHistoryService) GetTransactionHistory(_ context.Context, _ uuid.
 func TestGetHistoryHandler_ReturnsArray(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetHistoryService{
+	svc := &FakeGetHistoryService{
 		history: []domainledger.TransactionWithEntries{
 			{Transaction: testTransaction(), Entries: testEntries()},
 		},
@@ -293,7 +293,7 @@ func TestGetHistoryHandler_ReturnsArray(t *testing.T) {
 func TestGetHistoryHandler_EmptyList_ReturnsEmptyArray(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetHistoryService{history: []domainledger.TransactionWithEntries{}}
+	svc := &FakeGetHistoryService{history: []domainledger.TransactionWithEntries{}}
 	handler := pfmhttp.GetTransactionHistoryHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -309,7 +309,7 @@ func TestGetHistoryHandler_EmptyList_ReturnsEmptyArray(t *testing.T) {
 func TestGetHistoryHandler_WithQueryParams(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetHistoryService{history: []domainledger.TransactionWithEntries{}}
+	svc := &FakeGetHistoryService{history: []domainledger.TransactionWithEntries{}}
 	handler := pfmhttp.GetTransactionHistoryHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/?account_id="+ledgerAcctID.String()+"&limit=10&offset=5", nil)

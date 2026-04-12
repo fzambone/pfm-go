@@ -55,12 +55,12 @@ func testMembership() domainhouse.Membership {
 
 // --- CreateHouseholdHandler tests ---
 
-type stubCreateHouseholdService struct {
+type FakeCreateHouseholdService struct {
 	household domainhouse.Household
 	err       error
 }
 
-func (s *stubCreateHouseholdService) Create(_ context.Context, _ domainhouse.CreateInput, _ uuid.UUID) (domainhouse.Household, error) {
+func (s *FakeCreateHouseholdService) Create(_ context.Context, _ domainhouse.CreateInput, _ uuid.UUID) (domainhouse.Household, error) {
 	return s.household, s.err
 }
 
@@ -69,7 +69,7 @@ func (s *stubCreateHouseholdService) Create(_ context.Context, _ domainhouse.Cre
 func TestCreateHouseholdHandler_ValidRequest_Returns201(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateHouseholdService{household: testHousehold()}
+	svc := &FakeCreateHouseholdService{household: testHousehold()}
 	handler := pfmhttp.CreateHouseholdHandler(svc)
 
 	body := `{"name":"Test House"}`
@@ -90,7 +90,7 @@ func TestCreateHouseholdHandler_ValidRequest_Returns201(t *testing.T) {
 func TestCreateHouseholdHandler_ValidationError_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateHouseholdService{
+	svc := &FakeCreateHouseholdService{
 		err: &validate.ValidationError{
 			Violations: []validate.Violation{{Field: "name", Message: "is required"}},
 		},
@@ -110,7 +110,7 @@ func TestCreateHouseholdHandler_ValidationError_Returns400(t *testing.T) {
 func TestCreateHouseholdHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateHouseholdService{}
+	svc := &FakeCreateHouseholdService{}
 	handler := pfmhttp.CreateHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/households", strings.NewReader("{bad"))
@@ -128,12 +128,12 @@ func TestCreateHouseholdHandler_NilService_Panics(t *testing.T) {
 
 // --- GetHouseholdHandler tests ---
 
-type stubGetHouseholdService struct {
+type FakeGetHouseholdService struct {
 	household domainhouse.Household
 	err       error
 }
 
-func (s *stubGetHouseholdService) FindByID(_ context.Context, _ uuid.UUID) (domainhouse.Household, error) {
+func (s *FakeGetHouseholdService) FindByID(_ context.Context, _ uuid.UUID) (domainhouse.Household, error) {
 	return s.household, s.err
 }
 
@@ -141,7 +141,7 @@ func (s *stubGetHouseholdService) FindByID(_ context.Context, _ uuid.UUID) (doma
 func TestGetHouseholdHandler_ValidID_Returns200(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetHouseholdService{household: testHousehold()}
+	svc := &FakeGetHouseholdService{household: testHousehold()}
 	handler := pfmhttp.GetHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/households/"+houseID.String(), nil)
@@ -159,7 +159,7 @@ func TestGetHouseholdHandler_ValidID_Returns200(t *testing.T) {
 func TestGetHouseholdHandler_NotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetHouseholdService{err: message.ErrHouseholdNotFound}
+	svc := &FakeGetHouseholdService{err: message.ErrHouseholdNotFound}
 	handler := pfmhttp.GetHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/households/"+uuid.Nil.String(), nil)
@@ -174,7 +174,7 @@ func TestGetHouseholdHandler_NotFound_Returns404(t *testing.T) {
 func TestGetHouseholdHandler_InvalidUUID_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetHouseholdService{}
+	svc := &FakeGetHouseholdService{}
 	handler := pfmhttp.GetHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/households/bad", nil)
@@ -193,12 +193,12 @@ func TestGetHouseholdHandler_NilService_Panics(t *testing.T) {
 
 // --- ListHouseholdsHandler tests ---
 
-type stubListHouseholdsService struct {
+type FakeListHouseholdsService struct {
 	households []domainhouse.Household
 	err        error
 }
 
-func (s *stubListHouseholdsService) ListForUser(_ context.Context, _ uuid.UUID) ([]domainhouse.Household, error) {
+func (s *FakeListHouseholdsService) ListForUser(_ context.Context, _ uuid.UUID) ([]domainhouse.Household, error) {
 	return s.households, s.err
 }
 
@@ -206,7 +206,7 @@ func (s *stubListHouseholdsService) ListForUser(_ context.Context, _ uuid.UUID) 
 func TestListHouseholdsHandler_ReturnsArray(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubListHouseholdsService{households: []domainhouse.Household{testHousehold()}}
+	svc := &FakeListHouseholdsService{households: []domainhouse.Household{testHousehold()}}
 	handler := pfmhttp.ListHouseholdsHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/households", nil)
@@ -226,7 +226,7 @@ func TestListHouseholdsHandler_ReturnsArray(t *testing.T) {
 func TestListHouseholdsHandler_EmptyList_ReturnsEmptyArray(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubListHouseholdsService{households: []domainhouse.Household{}}
+	svc := &FakeListHouseholdsService{households: []domainhouse.Household{}}
 	handler := pfmhttp.ListHouseholdsHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/households", nil)
@@ -247,12 +247,12 @@ func TestListHouseholdsHandler_NilService_Panics(t *testing.T) {
 
 // --- AddMemberHandler tests ---
 
-type stubAddMemberService struct {
+type FakeAddMemberService struct {
 	membership domainhouse.Membership
 	err        error
 }
 
-func (s *stubAddMemberService) AddMember(_ context.Context, _ uuid.UUID, _ domainhouse.AddMemberInput, _ uuid.UUID) (domainhouse.Membership, error) {
+func (s *FakeAddMemberService) AddMember(_ context.Context, _ uuid.UUID, _ domainhouse.AddMemberInput, _ uuid.UUID) (domainhouse.Membership, error) {
 	return s.membership, s.err
 }
 
@@ -260,7 +260,7 @@ func (s *stubAddMemberService) AddMember(_ context.Context, _ uuid.UUID, _ domai
 func TestAddMemberHandler_ValidRequest_Returns201(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubAddMemberService{membership: testMembership()}
+	svc := &FakeAddMemberService{membership: testMembership()}
 	handler := pfmhttp.AddMemberHandler(svc)
 
 	body := `{"user_id":"00000000-0000-0000-0000-000000000020","role":"MEMBER"}`
@@ -281,7 +281,7 @@ func TestAddMemberHandler_ValidRequest_Returns201(t *testing.T) {
 func TestAddMemberHandler_AlreadyMember_Returns409(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubAddMemberService{err: message.ErrHouseholdMemberExists}
+	svc := &FakeAddMemberService{err: message.ErrHouseholdMemberExists}
 	handler := pfmhttp.AddMemberHandler(svc)
 
 	body := `{"user_id":"00000000-0000-0000-0000-000000000020","role":"MEMBER"}`
@@ -298,7 +298,7 @@ func TestAddMemberHandler_AlreadyMember_Returns409(t *testing.T) {
 func TestAddMemberHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubAddMemberService{}
+	svc := &FakeAddMemberService{}
 	handler := pfmhttp.AddMemberHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/households/"+houseID.String()+"/members", strings.NewReader("{bad"))
@@ -317,11 +317,11 @@ func TestAddMemberHandler_NilService_Panics(t *testing.T) {
 
 // --- RemoveMemberHandler tests ---
 
-type stubRemoveMemberService struct {
+type FakeRemoveMemberService struct {
 	err error
 }
 
-func (s *stubRemoveMemberService) RemoveMember(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ uuid.UUID) error {
+func (s *FakeRemoveMemberService) RemoveMember(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ uuid.UUID) error {
 	return s.err
 }
 
@@ -329,7 +329,7 @@ func (s *stubRemoveMemberService) RemoveMember(_ context.Context, _ uuid.UUID, _
 func TestRemoveMemberHandler_Success_Returns204(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubRemoveMemberService{}
+	svc := &FakeRemoveMemberService{}
 	handler := pfmhttp.RemoveMemberHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+houseID.String()+"/members/"+memberID.String(), nil)
@@ -347,7 +347,7 @@ func TestRemoveMemberHandler_Success_Returns204(t *testing.T) {
 func TestRemoveMemberHandler_LastAdmin_ReturnsConflict(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubRemoveMemberService{err: message.ErrHouseholdLastAdmin}
+	svc := &FakeRemoveMemberService{err: message.ErrHouseholdLastAdmin}
 	handler := pfmhttp.RemoveMemberHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+houseID.String()+"/members/"+callerID.String(), nil)
@@ -364,7 +364,7 @@ func TestRemoveMemberHandler_LastAdmin_ReturnsConflict(t *testing.T) {
 func TestRemoveMemberHandler_MemberNotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubRemoveMemberService{err: message.ErrHouseholdMemberNotFound}
+	svc := &FakeRemoveMemberService{err: message.ErrHouseholdMemberNotFound}
 	handler := pfmhttp.RemoveMemberHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+houseID.String()+"/members/"+uuid.Nil.String(), nil)
@@ -385,12 +385,12 @@ func TestRemoveMemberHandler_NilService_Panics(t *testing.T) {
 
 // --- UpdateHouseholdNameHandler tests ---
 
-type stubUpdateHouseholdNameService struct {
+type FakeUpdateHouseholdNameService struct {
 	household domainhouse.Household
 	err       error
 }
 
-func (s *stubUpdateHouseholdNameService) UpdateName(_ context.Context, _ uuid.UUID, _ domainhouse.UpdateNameInput, _ int, _ uuid.UUID) (domainhouse.Household, error) {
+func (s *FakeUpdateHouseholdNameService) UpdateName(_ context.Context, _ uuid.UUID, _ domainhouse.UpdateNameInput, _ int, _ uuid.UUID) (domainhouse.Household, error) {
 	return s.household, s.err
 }
 
@@ -400,7 +400,7 @@ func TestUpdateHouseholdNameHandler_ValidRequest_Returns200(t *testing.T) {
 
 	updated := testHousehold()
 	updated.Name = "New Name"
-	svc := &stubUpdateHouseholdNameService{household: updated}
+	svc := &FakeUpdateHouseholdNameService{household: updated}
 	handler := pfmhttp.UpdateHouseholdNameHandler(svc)
 
 	body := `{"name":"New Name","version":1}`
@@ -420,7 +420,7 @@ func TestUpdateHouseholdNameHandler_ValidRequest_Returns200(t *testing.T) {
 func TestUpdateHouseholdNameHandler_StaleVersion_Returns409(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubUpdateHouseholdNameService{err: message.ErrHouseholdVersionConflict}
+	svc := &FakeUpdateHouseholdNameService{err: message.ErrHouseholdVersionConflict}
 	handler := pfmhttp.UpdateHouseholdNameHandler(svc)
 
 	body := `{"name":"New Name","version":1}`
@@ -437,7 +437,7 @@ func TestUpdateHouseholdNameHandler_StaleVersion_Returns409(t *testing.T) {
 func TestUpdateHouseholdNameHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubUpdateHouseholdNameService{}
+	svc := &FakeUpdateHouseholdNameService{}
 	handler := pfmhttp.UpdateHouseholdNameHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPut, "/api/v1/households/"+houseID.String(), strings.NewReader("{bad"))
@@ -456,11 +456,11 @@ func TestUpdateHouseholdNameHandler_NilService_Panics(t *testing.T) {
 
 // --- DeactivateHouseholdHandler tests ---
 
-type stubDeactivateHouseholdService struct {
+type FakeDeactivateHouseholdService struct {
 	err error
 }
 
-func (s *stubDeactivateHouseholdService) Deactivate(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
+func (s *FakeDeactivateHouseholdService) Deactivate(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
 	return s.err
 }
 
@@ -468,7 +468,7 @@ func (s *stubDeactivateHouseholdService) Deactivate(_ context.Context, _ uuid.UU
 func TestDeactivateHouseholdHandler_Success_Returns204(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeactivateHouseholdService{}
+	svc := &FakeDeactivateHouseholdService{}
 	handler := pfmhttp.DeactivateHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+houseID.String(), nil)
@@ -485,7 +485,7 @@ func TestDeactivateHouseholdHandler_Success_Returns204(t *testing.T) {
 func TestDeactivateHouseholdHandler_NotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeactivateHouseholdService{err: message.ErrHouseholdNotFound}
+	svc := &FakeDeactivateHouseholdService{err: message.ErrHouseholdNotFound}
 	handler := pfmhttp.DeactivateHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/"+uuid.Nil.String(), nil)
@@ -501,7 +501,7 @@ func TestDeactivateHouseholdHandler_NotFound_Returns404(t *testing.T) {
 func TestDeactivateHouseholdHandler_InvalidUUID_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeactivateHouseholdService{}
+	svc := &FakeDeactivateHouseholdService{}
 	handler := pfmhttp.DeactivateHouseholdHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/households/bad", nil)
@@ -520,13 +520,13 @@ func TestDeactivateHouseholdHandler_NilService_Panics(t *testing.T) {
 
 // --- CreateHouseholdUserHandler tests ---
 
-// stubCreateHouseholdUserService is a test double for createHouseholdUserService.
-type stubCreateHouseholdUserService struct {
+// FakeCreateHouseholdUserService is a test double for createHouseholdUserService.
+type FakeCreateHouseholdUserService struct {
 	result domainhouse.CreatedMember
 	err    error
 }
 
-func (s *stubCreateHouseholdUserService) CreateHouseholdUser(
+func (s *FakeCreateHouseholdUserService) CreateHouseholdUser(
 	_ context.Context, _ uuid.UUID, _ domainhouse.NewUserInput, _ uuid.UUID,
 ) (domainhouse.CreatedMember, error) {
 	return s.result, s.err
@@ -554,7 +554,7 @@ func TestCreateHouseholdUserHandler_Returns201(t *testing.T) {
 	t.Parallel()
 
 	callerID := uuid.New()
-	svc := &stubCreateHouseholdUserService{result: testCreatedMember()}
+	svc := &FakeCreateHouseholdUserService{result: testCreatedMember()}
 	handler := pfmhttp.CreateHouseholdUserHandler(svc)
 
 	body := `{"email":"new@example.com","display_name":"New User","password":"secret1234"}`
@@ -580,7 +580,7 @@ func TestCreateHouseholdUserHandler_EmailTaken_Returns409(t *testing.T) {
 	t.Parallel()
 
 	callerID := uuid.New()
-	svc := &stubCreateHouseholdUserService{err: message.ErrUserEmailTaken}
+	svc := &FakeCreateHouseholdUserService{err: message.ErrUserEmailTaken}
 	handler := pfmhttp.CreateHouseholdUserHandler(svc)
 
 	body := `{"email":"taken@example.com","display_name":"User","password":"secret1234"}`
@@ -598,7 +598,7 @@ func TestCreateHouseholdUserHandler_MissingFields_Returns400(t *testing.T) {
 	t.Parallel()
 
 	callerID := uuid.New()
-	svc := &stubCreateHouseholdUserService{}
+	svc := &FakeCreateHouseholdUserService{}
 	handler := pfmhttp.CreateHouseholdUserHandler(svc)
 
 	tests := []struct {
@@ -628,7 +628,7 @@ func TestCreateHouseholdUserHandler_InvalidHouseholdID_Returns400(t *testing.T) 
 	t.Parallel()
 
 	callerID := uuid.New()
-	svc := &stubCreateHouseholdUserService{}
+	svc := &FakeCreateHouseholdUserService{}
 	handler := pfmhttp.CreateHouseholdUserHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"email":"a@b.com","display_name":"A","password":"s"}`))
@@ -645,7 +645,7 @@ func TestCreateHouseholdUserHandler_InternalError_Returns500(t *testing.T) {
 	t.Parallel()
 
 	callerID := uuid.New()
-	svc := &stubCreateHouseholdUserService{err: errors.New("unexpected")}
+	svc := &FakeCreateHouseholdUserService{err: errors.New("unexpected")}
 	handler := pfmhttp.CreateHouseholdUserHandler(svc)
 
 	body := `{"email":"a@b.com","display_name":"A","password":"secret1234"}`

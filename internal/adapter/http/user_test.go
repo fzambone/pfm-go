@@ -44,13 +44,13 @@ func ctxWithUser(id uuid.UUID) context.Context {
 
 // --- GetUserHandler tests ---
 
-// stubGetUserService is a test double for the getUserService interface.
-type stubGetUserService struct {
+// FakeGetUserService is a test double for the getUserService interface.
+type FakeGetUserService struct {
 	user domainuser.User
 	err  error
 }
 
-func (s *stubGetUserService) FindByID(_ context.Context, _ uuid.UUID) (domainuser.User, error) {
+func (s *FakeGetUserService) FindByID(_ context.Context, _ uuid.UUID) (domainuser.User, error) {
 	return s.user, s.err
 }
 
@@ -59,7 +59,7 @@ func (s *stubGetUserService) FindByID(_ context.Context, _ uuid.UUID) (domainuse
 func TestGetUserHandler_ValidID_Returns200(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetUserService{user: testUser()}
+	svc := &FakeGetUserService{user: testUser()}
 	handler := pfmhttp.GetUserHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+testUser().ID.String(), nil)
@@ -79,7 +79,7 @@ func TestGetUserHandler_ValidID_Returns200(t *testing.T) {
 func TestGetUserHandler_NotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetUserService{err: message.ErrUserNotFound}
+	svc := &FakeGetUserService{err: message.ErrUserNotFound}
 	handler := pfmhttp.GetUserHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+uuid.Nil.String(), nil)
@@ -95,7 +95,7 @@ func TestGetUserHandler_NotFound_Returns404(t *testing.T) {
 func TestGetUserHandler_InvalidUUID_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetUserService{}
+	svc := &FakeGetUserService{}
 	handler := pfmhttp.GetUserHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/api/v1/users/not-a-uuid", nil)
@@ -114,13 +114,13 @@ func TestGetUserHandler_NilService_Panics(t *testing.T) {
 
 // --- UpdateProfileHandler tests ---
 
-// stubUpdateProfileService is a test double for the updateProfileService interface.
-type stubUpdateProfileService struct {
+// FakeUpdateProfileService is a test double for the updateProfileService interface.
+type FakeUpdateProfileService struct {
 	user domainuser.User
 	err  error
 }
 
-func (s *stubUpdateProfileService) UpdateProfile(_ context.Context, _ uuid.UUID, _ domainuser.UpdateProfileInput, _ int, _ uuid.UUID) (domainuser.User, error) {
+func (s *FakeUpdateProfileService) UpdateProfile(_ context.Context, _ uuid.UUID, _ domainuser.UpdateProfileInput, _ int, _ uuid.UUID) (domainuser.User, error) {
 	return s.user, s.err
 }
 
@@ -131,7 +131,7 @@ func TestUpdateProfileHandler_ValidRequest_Returns200(t *testing.T) {
 
 	updated := testUser()
 	updated.DisplayName = "Alice Updated"
-	svc := &stubUpdateProfileService{user: updated}
+	svc := &FakeUpdateProfileService{user: updated}
 	handler := pfmhttp.UpdateProfileHandler(svc)
 
 	body := `{"display_name":"Alice Updated","version":1}`
@@ -152,7 +152,7 @@ func TestUpdateProfileHandler_ValidRequest_Returns200(t *testing.T) {
 func TestUpdateProfileHandler_StaleVersion_Returns409(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubUpdateProfileService{err: message.ErrUserVersionConflict}
+	svc := &FakeUpdateProfileService{err: message.ErrUserVersionConflict}
 	handler := pfmhttp.UpdateProfileHandler(svc)
 
 	body := `{"display_name":"New Name","version":1}`
@@ -170,7 +170,7 @@ func TestUpdateProfileHandler_StaleVersion_Returns409(t *testing.T) {
 func TestUpdateProfileHandler_ValidationError_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubUpdateProfileService{
+	svc := &FakeUpdateProfileService{
 		err: &validate.ValidationError{
 			Violations: []validate.Violation{{Field: "display_name", Message: "is required"}},
 		},
@@ -191,7 +191,7 @@ func TestUpdateProfileHandler_ValidationError_Returns400(t *testing.T) {
 func TestUpdateProfileHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubUpdateProfileService{}
+	svc := &FakeUpdateProfileService{}
 	handler := pfmhttp.UpdateProfileHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPut, "/api/v1/users/"+testUser().ID.String(), strings.NewReader("{bad"))
@@ -210,13 +210,13 @@ func TestUpdateProfileHandler_NilService_Panics(t *testing.T) {
 
 // --- ChangePasswordHandler tests ---
 
-// stubChangePasswordService is a test double for the changePasswordService interface.
-type stubChangePasswordService struct {
+// FakeChangePasswordService is a test double for the changePasswordService interface.
+type FakeChangePasswordService struct {
 	user domainuser.User
 	err  error
 }
 
-func (s *stubChangePasswordService) ChangePassword(_ context.Context, _ uuid.UUID, _ domainuser.ChangePasswordInput, _ int, _ uuid.UUID) (domainuser.User, error) {
+func (s *FakeChangePasswordService) ChangePassword(_ context.Context, _ uuid.UUID, _ domainuser.ChangePasswordInput, _ int, _ uuid.UUID) (domainuser.User, error) {
 	return s.user, s.err
 }
 
@@ -225,7 +225,7 @@ func (s *stubChangePasswordService) ChangePassword(_ context.Context, _ uuid.UUI
 func TestChangePasswordHandler_ValidRequest_Returns200(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubChangePasswordService{user: testUser()}
+	svc := &FakeChangePasswordService{user: testUser()}
 	handler := pfmhttp.ChangePasswordHandler(svc)
 
 	body := `{"old_password":"oldpass123","new_password":"newpass123","version":1}`
@@ -246,7 +246,7 @@ func TestChangePasswordHandler_ValidRequest_Returns200(t *testing.T) {
 func TestChangePasswordHandler_WrongPassword_Returns401(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubChangePasswordService{err: message.ErrLoginInvalidCredentials}
+	svc := &FakeChangePasswordService{err: message.ErrLoginInvalidCredentials}
 	handler := pfmhttp.ChangePasswordHandler(svc)
 
 	body := `{"old_password":"wrong","new_password":"newpass123","version":1}`
@@ -264,7 +264,7 @@ func TestChangePasswordHandler_WrongPassword_Returns401(t *testing.T) {
 func TestChangePasswordHandler_ValidationError_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubChangePasswordService{
+	svc := &FakeChangePasswordService{
 		err: &validate.ValidationError{
 			Violations: []validate.Violation{
 				{Field: "old_password", Message: "is required"},
@@ -288,7 +288,7 @@ func TestChangePasswordHandler_ValidationError_Returns400(t *testing.T) {
 func TestChangePasswordHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubChangePasswordService{}
+	svc := &FakeChangePasswordService{}
 	handler := pfmhttp.ChangePasswordHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPut, "/api/v1/users/"+testUser().ID.String()+"/password", strings.NewReader("{bad"))
@@ -307,12 +307,12 @@ func TestChangePasswordHandler_NilService_Panics(t *testing.T) {
 
 // --- DeactivateUserHandler tests ---
 
-// stubDeactivateUserService is a test double for the deactivateUserService interface.
-type stubDeactivateUserService struct {
+// FakeDeactivateUserService is a test double for the deactivateUserService interface.
+type FakeDeactivateUserService struct {
 	err error
 }
 
-func (s *stubDeactivateUserService) Deactivate(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
+func (s *FakeDeactivateUserService) Deactivate(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
 	return s.err
 }
 
@@ -321,7 +321,7 @@ func (s *stubDeactivateUserService) Deactivate(_ context.Context, _ uuid.UUID, _
 func TestDeactivateUserHandler_Success_Returns204(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeactivateUserService{}
+	svc := &FakeDeactivateUserService{}
 	handler := pfmhttp.DeactivateUserHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/users/"+testUser().ID.String(), nil)
@@ -339,7 +339,7 @@ func TestDeactivateUserHandler_Success_Returns204(t *testing.T) {
 func TestDeactivateUserHandler_NotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeactivateUserService{err: message.ErrUserNotFound}
+	svc := &FakeDeactivateUserService{err: message.ErrUserNotFound}
 	handler := pfmhttp.DeactivateUserHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/users/"+uuid.Nil.String(), nil)
@@ -355,7 +355,7 @@ func TestDeactivateUserHandler_NotFound_Returns404(t *testing.T) {
 func TestDeactivateUserHandler_InvalidUUID_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeactivateUserService{}
+	svc := &FakeDeactivateUserService{}
 	handler := pfmhttp.DeactivateUserHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/api/v1/users/not-a-uuid", nil)
