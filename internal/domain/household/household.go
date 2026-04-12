@@ -91,3 +91,33 @@ type Repository interface {
 	HouseholdReader
 	HouseholdWriter
 }
+
+// NewUserInput carries the registration details for creating a new user within a household.
+// The household domain defines this type independently so it never imports domain/user.
+type NewUserInput struct {
+	Email       string
+	DisplayName string
+	Password    string
+}
+
+// CreatedUser holds the minimal user record returned after user creation.
+// It contains only the fields the household domain needs to build a membership.
+type CreatedUser struct {
+	ID          uuid.UUID
+	Email       string
+	DisplayName string
+}
+
+// CreatedMember is the result of CreateHouseholdUser — the new user and their membership
+// within the target household, created atomically in a single transaction.
+type CreatedMember struct {
+	User       CreatedUser
+	Membership Membership
+}
+
+// userCreator is the narrow interface the household domain uses to create users.
+// It is defined at the consumer (household domain), not at the provider (user domain).
+// Structurally satisfied by an adapter in cmd/pfm/main.go that wraps UserLogic.
+type userCreator interface {
+	Create(ctx context.Context, input NewUserInput, callerID uuid.UUID) (CreatedUser, error)
+}

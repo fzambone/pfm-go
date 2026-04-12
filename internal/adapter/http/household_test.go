@@ -3,6 +3,7 @@ package http_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	pfmhttp "github.com/zambone/pfm-go/internal/adapter/http"
 	domainhouse "github.com/zambone/pfm-go/internal/domain/household"
 	"github.com/zambone/pfm-go/internal/message"
+	"github.com/zambone/pfm-go/internal/platform/ctxutil"
 	"github.com/zambone/pfm-go/internal/platform/validate"
 	"github.com/zambone/pfm-go/internal/types"
 )
@@ -514,4 +516,150 @@ func TestDeactivateHouseholdHandler_InvalidUUID_Returns400(t *testing.T) {
 func TestDeactivateHouseholdHandler_NilService_Panics(t *testing.T) {
 	t.Parallel()
 	assert.Panics(t, func() { pfmhttp.DeactivateHouseholdHandler(nil) })
+}
+
+// --- CreateHouseholdUserHandler tests ---
+
+// stubCreateHouseholdUserService is a test double for createHouseholdUserService.
+type stubCreateHouseholdUserService struct {
+	result domainhouse.CreatedMember
+	err    error
+}
+
+func (s *stubCreateHouseholdUserService) CreateHouseholdUser(
+	_ context.Context, _ uuid.UUID, _ domainhouse.NewUserInput, _ uuid.UUID,
+) (domainhouse.CreatedMember, error) {
+	return s.result, s.err
+}
+
+func testCreatedMember() domainhouse.CreatedMember {
+	hid := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	uid := uuid.MustParse("00000000-0000-0000-0000-000000000002")
+	return domainhouse.CreatedMember{
+		User: domainhouse.CreatedUser{
+			ID:          uid,
+			Email:       "new@example.com",
+			DisplayName: "New User",
+		},
+		Membership: domainhouse.Membership{
+			HouseholdID: hid,
+			UserID:      uid,
+		},
+	}
+}
+
+// TestCreateHouseholdUserHandler_Returns201 verifies AC: a valid request from a
+// caller with a user in context returns 201 with the new user and Location header.
+func TestCreateHouseholdUserHandler_Returns201(t *testing.T) {
+	t.Parallel()
+
+	callerID := uuid.New()
+	svc := &stubCreateHouseholdUserService{result: testCreatedMember()}
+	handler := pfmhttp.CreateHouseholdUserHandler(svc)
+
+	body := `{"email":"new@example.com","display_name":"New User","password":"secret1234"}`
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/households/"+testCreatedMember().Membership.HouseholdID.String()+"/users", strings.NewReader(body))
+	r.SetPathValue("household_id", testCreatedMember().Membership.HouseholdID.String())
+	r = r.WithContext(ctxutil.WithUserID(r.Context(), callerID))
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, r)
+
+	require.Equal(t, http.StatusCreated, w.Code)
+	assert.Contains(t, w.Header().Get("Location"), testCreatedMember().User.ID.String())
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+
+	var resp map[string]any
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&resp))
+	assert.Equal(t, "new@example.com", resp["email"])
+	assert.Equal(t, "New User", resp["display_name"])
+	assert.NotContains(t, w.Body.String(), "password")
+}
+
+// TestCreateHouseholdUserHandler_EmailTaken_Returns409 verifies 409 on duplicate email.
+func TestCreateHouseholdUserHandler_EmailTaken_Returns409(t *testing.T) {
+	t.Parallel()
+
+	callerID := uuid.New()
+	svc := &stubCreateHouseholdUserService{err: message.ErrUserEmailTaken}
+	handler := pfmhttp.CreateHouseholdUserHandler(svc)
+
+	body := `{"email":"taken@example.com","display_name":"User","password":"secret1234"}`
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+	r.SetPathValue("household_id", uuid.New().String())
+	r = r.WithContext(ctxutil.WithUserID(r.Context(), callerID))
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, r)
+
+	require.Equal(t, http.StatusConflict, w.Code)
+}
+
+// TestCreateHouseholdUserHandler_MissingFields_Returns400 verifies validation.
+func TestCreateHouseholdUserHandler_MissingFields_Returns400(t *testing.T) {
+	t.Parallel()
+
+	callerID := uuid.New()
+	svc := &stubCreateHouseholdUserService{}
+	handler := pfmhttp.CreateHouseholdUserHandler(svc)
+
+	tests := []struct {
+		name string
+		body string
+	}{
+		{"empty body", `{}`},
+		{"missing password", `{"email":"a@b.com","display_name":"A"}`},
+		{"missing email", `{"display_name":"A","password":"secret1234"}`},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tc.body))
+			r.SetPathValue("household_id", uuid.New().String())
+			r = r.WithContext(ctxutil.WithUserID(r.Context(), callerID))
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, r)
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+		})
+	}
+}
+
+// TestCreateHouseholdUserHandler_InvalidHouseholdID_Returns400 verifies bad path param.
+func TestCreateHouseholdUserHandler_InvalidHouseholdID_Returns400(t *testing.T) {
+	t.Parallel()
+
+	callerID := uuid.New()
+	svc := &stubCreateHouseholdUserService{}
+	handler := pfmhttp.CreateHouseholdUserHandler(svc)
+
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"email":"a@b.com","display_name":"A","password":"s"}`))
+	r.SetPathValue("household_id", "not-a-uuid")
+	r = r.WithContext(ctxutil.WithUserID(r.Context(), callerID))
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, r)
+
+	require.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+// TestCreateHouseholdUserHandler_InternalError_Returns500 verifies 500 on unexpected errors.
+func TestCreateHouseholdUserHandler_InternalError_Returns500(t *testing.T) {
+	t.Parallel()
+
+	callerID := uuid.New()
+	svc := &stubCreateHouseholdUserService{err: errors.New("unexpected")}
+	handler := pfmhttp.CreateHouseholdUserHandler(svc)
+
+	body := `{"email":"a@b.com","display_name":"A","password":"secret1234"}`
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+	r.SetPathValue("household_id", uuid.New().String())
+	r = r.WithContext(ctxutil.WithUserID(r.Context(), callerID))
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, r)
+
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+// TestCreateHouseholdUserHandler_NilService_Panics verifies the nil guard.
+func TestCreateHouseholdUserHandler_NilService_Panics(t *testing.T) {
+	t.Parallel()
+	assert.Panics(t, func() { pfmhttp.CreateHouseholdUserHandler(nil) })
 }

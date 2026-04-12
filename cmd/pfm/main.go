@@ -13,6 +13,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
+
 	pfmhttp "github.com/zambone/pfm-go/internal/adapter/http"
 	authadapter "github.com/zambone/pfm-go/internal/adapter/auth"
 	pgadapter "github.com/zambone/pfm-go/internal/adapter/postgres"
@@ -125,6 +127,12 @@ func run() error {
 		time.Duration(cfg.TokenExpirationSec)*time.Second,
 	)
 	householdLogic := domainhousehold.NewHouseholdLogic(householdRepo, transactor, realClock)
+	householdMemberLogic := domainhousehold.NewHouseholdMemberLogic(
+		householdRepo,
+		newHouseholdUserCreator(userLogic),
+		transactor,
+		realClock,
+	)
 	accountLogic := domainaccount.NewAccountLogic(accountRepo, realClock)
 	ccSettingsLogic := domaincreditcard.NewSettingsLogic(
 		ccSettingsRepo,
@@ -147,7 +155,6 @@ func run() error {
 
 		// User
 		LoginSvc:          loginLogic,
-		RegisterSvc:       userLogic,
 		GetUserSvc:        userLogic,
 		UpdateProfileSvc:  userLogic,
 		ChangePasswordSvc: userLogic,
@@ -155,6 +162,7 @@ func run() error {
 
 		// Household
 		CreateHouseholdSvc:     householdLogic,
+		CreateHouseholdUserSvc: householdMemberLogic,
 		GetHouseholdSvc:        householdLogic,
 		ListHouseholdsSvc:      householdLogic,
 		AddMemberSvc:           householdLogic,
@@ -222,4 +230,35 @@ func run() error {
 	}
 
 	return nil
+}
+
+// householdUserCreator adapts UserLogic to the household.userCreator interface.
+// It lives here — in the composition root — because it bridges two domain packages
+// that must not import each other.
+type householdUserCreator struct {
+	logic *domainuser.UserLogic
+}
+
+// newHouseholdUserCreator returns a householdUserCreator wrapping the given UserLogic.
+func newHouseholdUserCreator(logic *domainuser.UserLogic) *householdUserCreator {
+	return &householdUserCreator{logic: logic}
+}
+
+// Create implements the household.userCreator interface. It delegates to UserLogic.Register,
+// which handles validation and password hashing, then maps the result to the household
+// domain's minimal CreatedUser type.
+func (a *householdUserCreator) Create(ctx context.Context, input domainhousehold.NewUserInput, callerID uuid.UUID) (domainhousehold.CreatedUser, error) {
+	u, err := a.logic.Register(ctx, domainuser.RegisterInput{
+		Email:       input.Email,
+		DisplayName: input.DisplayName,
+		Password:    input.Password,
+	}, callerID)
+	if err != nil {
+		return domainhousehold.CreatedUser{}, err
+	}
+	return domainhousehold.CreatedUser{
+		ID:          u.ID,
+		Email:       u.Email,
+		DisplayName: u.DisplayName,
+	}, nil
 }

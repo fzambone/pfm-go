@@ -30,9 +30,6 @@ type allServicesStub struct{}
 func (s *allServicesStub) Login(_ context.Context, _, _ string) (domainuser.LoginResult, error) {
 	return domainuser.LoginResult{}, nil
 }
-func (s *allServicesStub) Register(_ context.Context, _ domainuser.RegisterInput, _ uuid.UUID) (domainuser.User, error) {
-	return domainuser.User{}, nil
-}
 func (s *allServicesStub) FindByID(_ context.Context, _ uuid.UUID) (domainuser.User, error) {
 	return domainuser.User{}, nil
 }
@@ -65,6 +62,9 @@ type householdServiceStub struct{}
 
 func (s *householdServiceStub) Create(_ context.Context, _ domainhouse.CreateInput, _ uuid.UUID) (domainhouse.Household, error) {
 	return domainhouse.Household{}, nil
+}
+func (s *householdServiceStub) CreateHouseholdUser(_ context.Context, _ uuid.UUID, _ domainhouse.NewUserInput, _ uuid.UUID) (domainhouse.CreatedMember, error) {
+	return domainhouse.CreatedMember{}, nil
 }
 func (s *householdServiceStub) FindByID(_ context.Context, _ uuid.UUID) (domainhouse.Household, error) {
 	return domainhouse.Household{}, nil
@@ -158,17 +158,17 @@ func buildTestDeps() pfmhttp.RouteDeps {
 		ShuttingDown:   &shuttingDown,
 		TokenValidator: &tokenValidatorStub{},
 		MembershipFinder: &membershipFinderStub{},
-		LoginSvc:       userSvc,
-		RegisterSvc:    userSvc,
-		GetUserSvc:     userSvc,
+		LoginSvc:            userSvc,
+		GetUserSvc:          userSvc,
 		UpdateProfileSvc:    userSvc,
 		ChangePasswordSvc:   userSvc,
 		DeactivateUserSvc:   userSvc,
-		CreateHouseholdSvc:  houseSvc,
-		GetHouseholdSvc:     houseSvc,
-		ListHouseholdsSvc:   houseSvc,
-		AddMemberSvc:        houseSvc,
-		RemoveMemberSvc:     houseSvc,
+		CreateHouseholdSvc:     houseSvc,
+		CreateHouseholdUserSvc: houseSvc,
+		GetHouseholdSvc:        houseSvc,
+		ListHouseholdsSvc:      houseSvc,
+		AddMemberSvc:           houseSvc,
+		RemoveMemberSvc:        houseSvc,
 		UpdateHouseholdNameSvc:    houseSvc,
 		DeactivateHouseholdSvc:    houseSvc,
 		CreateAccountSvc:          acctSvc,
@@ -214,9 +214,6 @@ func TestRegisterRoutes_EndpointsReachable(t *testing.T) {
 		// Auth (public)
 		{"login", http.MethodPost, "/auth/login", http.StatusBadRequest}, // no body → 400, but route matched
 
-		// Users (public registration)
-		{"register", http.MethodPost, "/api/v1/users", http.StatusBadRequest},
-
 		// Users (authn required → 401 without token)
 		{"get user", http.MethodGet, "/api/v1/users/" + uuid.New().String(), http.StatusUnauthorized},
 		{"update profile", http.MethodPut, "/api/v1/users/" + uuid.New().String(), http.StatusUnauthorized},
@@ -226,6 +223,9 @@ func TestRegisterRoutes_EndpointsReachable(t *testing.T) {
 		// Households (authn required)
 		{"create household", http.MethodPost, "/api/v1/households", http.StatusUnauthorized},
 		{"list households", http.MethodGet, "/api/v1/households", http.StatusUnauthorized},
+
+		// Household-scoped user creation (authn + admin guard)
+		{"create household user", http.MethodPost, "/api/v1/households/" + hid + "/users", http.StatusUnauthorized},
 
 		// Household-scoped (authn + guard)
 		{"get household", http.MethodGet, "/api/v1/households/" + hid, http.StatusUnauthorized},
@@ -313,22 +313,6 @@ func TestRegisterRoutes_WrongMethod_Returns405(t *testing.T) {
 	mux.ServeHTTP(w, r)
 
 	assert.Equal(t, http.StatusMethodNotAllowed, w.Code)
-}
-
-// TestRegisterRoutes_PublicRegistration_NoAuthRequired verifies that POST /api/v1/users
-// does not require authentication (it returns 400 for empty body, not 401).
-func TestRegisterRoutes_PublicRegistration_NoAuthRequired(t *testing.T) {
-	t.Parallel()
-
-	mux := http.NewServeMux()
-	pfmhttp.RegisterRoutes(mux, buildTestDeps())
-
-	r := httptest.NewRequest(http.MethodPost, "/api/v1/users", nil)
-	w := httptest.NewRecorder()
-	mux.ServeHTTP(w, r)
-
-	// 400 (bad body), not 401 — proves no authn middleware on this route
-	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 // placeholder to use time import (used in stubs)

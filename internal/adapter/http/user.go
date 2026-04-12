@@ -69,62 +69,6 @@ func parseUUID(value string) (uuid.UUID, error) {
 	return id, nil
 }
 
-// --- Register ---
-
-// registerService is the subset of UserLogic required by RegisterHandler.
-type registerService interface {
-	Register(ctx context.Context, input domainuser.RegisterInput, callerID uuid.UUID) (domainuser.User, error)
-}
-
-type registerRequest struct {
-	Email       string `json:"email"`
-	DisplayName string `json:"display_name"`
-	Password    string `json:"password"`
-}
-
-// RegisterHandler returns an http.HandlerFunc that handles user registration.
-// On success it writes a 201 Created response with the new user and a Location header.
-// Panics if svc is nil.
-//
-// @Summary Register a new user
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param body body registerRequest true "Registration input"
-// @Success 201 {object} userResponse
-// @Failure 400 {object} map[string]string
-// @Failure 409 {object} map[string]string
-// @Router /api/v1/users [post]
-func RegisterHandler(svc registerService) http.HandlerFunc {
-	if svc == nil {
-		panic("http: RegisterHandler requires non-nil registerService")
-	}
-	return func(w http.ResponseWriter, r *http.Request) {
-		var req registerRequest
-		if err := DecodeBody(r, &req); err != nil {
-			WriteJSON(w, http.StatusBadRequest, map[string]string{"error": message.MsgBadRequestBody})
-			return
-		}
-
-		// callerID: for self-registration there is no authenticated user yet,
-		// so we use uuid.Nil as a sentinel meaning "self-created".
-		callerID, _ := ctxutil.UserID(r.Context())
-
-		u, err := svc.Register(r.Context(), domainuser.RegisterInput{
-			Email:       req.Email,
-			DisplayName: req.DisplayName,
-			Password:    req.Password,
-		}, callerID)
-		if err != nil {
-			handleDomainError(w, r, err)
-			return
-		}
-
-		location := fmt.Sprintf("/api/v1/users/%s", u.ID)
-		WriteCreated(w, location, toUserResponse(u))
-	}
-}
-
 // --- GetUser ---
 
 // getUserService is the subset of UserLogic required by GetUserHandler.

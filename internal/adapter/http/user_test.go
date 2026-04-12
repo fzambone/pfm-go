@@ -22,16 +22,6 @@ import (
 
 // --- Stubs ---
 
-// stubRegisterService is a test double for the registerService interface.
-type stubRegisterService struct {
-	user domainuser.User
-	err  error
-}
-
-func (s *stubRegisterService) Register(_ context.Context, _ domainuser.RegisterInput, _ uuid.UUID) (domainuser.User, error) {
-	return s.user, s.err
-}
-
 // testUser returns a User with all fields populated for test assertions.
 func testUser() domainuser.User {
 	return domainuser.User{
@@ -50,117 +40,6 @@ func testUser() domainuser.User {
 // authenticated request that has passed through the authn middleware.
 func ctxWithUser(id uuid.UUID) context.Context {
 	return ctxutil.WithUserID(context.Background(), id)
-}
-
-// --- RegisterHandler tests ---
-
-// TestRegisterHandler_ValidRequest_Returns201 verifies AC1: a valid registration
-// request returns 201 Created with the new user and a Location header.
-func TestRegisterHandler_ValidRequest_Returns201(t *testing.T) {
-	t.Parallel()
-
-	svc := &stubRegisterService{user: testUser()}
-	handler := pfmhttp.RegisterHandler(svc)
-
-	body := `{"email":"alice@example.com","display_name":"Alice","password":"secret123"}`
-	r := httptest.NewRequest(http.MethodPost, "/api/v1/users", strings.NewReader(body))
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, r)
-
-	require.Equal(t, http.StatusCreated, w.Code)
-	assert.Contains(t, w.Header().Get("Location"), testUser().ID.String())
-	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
-
-	var resp map[string]any
-	require.NoError(t, json.NewDecoder(w.Body).Decode(&resp))
-	assert.Equal(t, "alice@example.com", resp["email"])
-	assert.Equal(t, "Alice", resp["display_name"])
-	// PasswordHash must NEVER appear in the response
-	assert.NotContains(t, w.Body.String(), "password_hash")
-}
-
-// TestRegisterHandler_EmailTaken_Returns409 verifies AC2: duplicate email
-// returns 409 Conflict.
-func TestRegisterHandler_EmailTaken_Returns409(t *testing.T) {
-	t.Parallel()
-
-	svc := &stubRegisterService{err: message.ErrUserEmailTaken}
-	handler := pfmhttp.RegisterHandler(svc)
-
-	body := `{"email":"taken@example.com","display_name":"Bob","password":"secret123"}`
-	r := httptest.NewRequest(http.MethodPost, "/api/v1/users", strings.NewReader(body))
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, r)
-
-	require.Equal(t, http.StatusConflict, w.Code)
-}
-
-// TestRegisterHandler_MissingFields_Returns400 verifies AC10: missing required
-// fields return 400 with per-field validation details.
-func TestRegisterHandler_MissingFields_Returns400(t *testing.T) {
-	t.Parallel()
-
-	svc := &stubRegisterService{}
-	handler := pfmhttp.RegisterHandler(svc)
-
-	// All fields empty — domain logic returns ValidationError
-	svc.err = &validate.ValidationError{
-		Violations: []validate.Violation{
-			{Field: "email", Message: "is required"},
-			{Field: "display_name", Message: "is required"},
-			{Field: "password", Message: "is required"},
-		},
-	}
-
-	body := `{"email":"","display_name":"","password":""}`
-	r := httptest.NewRequest(http.MethodPost, "/api/v1/users", strings.NewReader(body))
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, r)
-
-	require.Equal(t, http.StatusBadRequest, w.Code)
-	var resp map[string]any
-	require.NoError(t, json.NewDecoder(w.Body).Decode(&resp))
-	assert.Equal(t, message.MsgValidationFailed, resp["error"])
-	fields, ok := resp["fields"].(map[string]any)
-	require.True(t, ok)
-	assert.Len(t, fields, 3)
-}
-
-// TestRegisterHandler_MalformedJSON_Returns400 verifies edge case: unparseable
-// body returns 400, not 500.
-func TestRegisterHandler_MalformedJSON_Returns400(t *testing.T) {
-	t.Parallel()
-
-	svc := &stubRegisterService{}
-	handler := pfmhttp.RegisterHandler(svc)
-
-	r := httptest.NewRequest(http.MethodPost, "/api/v1/users", strings.NewReader("{bad"))
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, r)
-
-	require.Equal(t, http.StatusBadRequest, w.Code)
-}
-
-// TestRegisterHandler_InternalError_Returns500 verifies AC6 (from #122):
-// unexpected errors return 500 with generic message.
-func TestRegisterHandler_InternalError_Returns500(t *testing.T) {
-	t.Parallel()
-
-	svc := &stubRegisterService{err: assert.AnError}
-	handler := pfmhttp.RegisterHandler(svc)
-
-	body := `{"email":"a@b.com","display_name":"X","password":"secret123"}`
-	r := httptest.NewRequest(http.MethodPost, "/api/v1/users", strings.NewReader(body))
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, r)
-
-	require.Equal(t, http.StatusInternalServerError, w.Code)
-}
-
-// TestRegisterHandler_NilService_Panics verifies the nil guard fires at wiring time.
-func TestRegisterHandler_NilService_Panics(t *testing.T) {
-	t.Parallel()
-	assert.Panics(t, func() { pfmhttp.RegisterHandler(nil) })
 }
 
 // --- GetUserHandler tests ---
