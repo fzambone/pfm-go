@@ -64,8 +64,8 @@ build-docker: ## Build the application Docker image
 test: ## Run unit tests with race detector
 	go test -race -count=1 ./...
 
-test-integration: ## Run full test suite including integration tests (requires Docker/Podman)
-	TESTCONTAINERS_RYUK_DISABLED=true go test -tags integration -race -count=1 -v ./...
+test-integration: ## Run full test suite including integration tests (requires Docker/OrbStack)
+	go test -tags integration -race -count=1 -v ./...
 
 coverage: ## Run unit tests with coverage report and enforce COVERAGE_THRESHOLD (default 70)
 	go test -race -count=1 -coverprofile=coverage.out -coverpkg=$(subst $(space),$(comma),$(UNIT_TEST_PKGS)) $(UNIT_TEST_PKGS)
