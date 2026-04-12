@@ -112,17 +112,17 @@ func TestLoginLogic_RepoInfraError_PropagatesError(t *testing.T) {
 	assert.False(t, errors.Is(err, message.ErrLoginInvalidCredentials))
 }
 
-// stubHasher and stubTokenIssuer are minimal test doubles for error injection.
+// FakeHasher and FakeTokenIssuer are minimal test doubles for error injection.
 // They are unexported and scoped to this test file only.
-type stubHasher struct{ err error }
+type FakeHasher struct{ err error }
 
-func (s *stubHasher) Verify(_ context.Context, _, _ string) (bool, error) {
+func (s *FakeHasher) Verify(_ context.Context, _, _ string) (bool, error) {
 	return false, s.err
 }
 
-type stubTokenIssuer struct{ err error }
+type FakeTokenIssuer struct{ err error }
 
-func (s *stubTokenIssuer) Issue(_ context.Context, _ uuid.UUID, _ time.Time) (string, error) {
+func (s *FakeTokenIssuer) Issue(_ context.Context, _ uuid.UUID, _ time.Time) (string, error) {
 	return "", s.err
 }
 
@@ -133,7 +133,7 @@ func TestLoginLogic_HasherError_PropagatesError(t *testing.T) {
 	repo := postgres.NewFakeUserRepository()
 	tokens := auth.NewFakeTokenService(clk)
 	hasherErr := errors.New("argon2: internal error")
-	hasher := &stubHasher{err: hasherErr}
+	hasher := &FakeHasher{err: hasherErr}
 
 	hash := "fake:" + testPassword
 	repo.Add(domainuser.User{ID: testUserID, Email: testEmail, PasswordHash: hash})
@@ -152,7 +152,7 @@ func TestLoginLogic_TokenIssueError_PropagatesError(t *testing.T) {
 	repo := postgres.NewFakeUserRepository()
 	hasher := auth.NewFakeHasher()
 	tokenErr := errors.New("paseto: key error")
-	tokens := &stubTokenIssuer{err: tokenErr}
+	tokens := &FakeTokenIssuer{err: tokenErr}
 
 	hash, err := hasher.Hash(context.Background(), testPassword)
 	require.NoError(t, err)

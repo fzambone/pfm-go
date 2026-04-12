@@ -20,14 +20,14 @@ import (
 	"github.com/zambone/pfm-go/internal/message"
 )
 
-// stubLoginService is a test double for the loginService interface.
+// FakeLoginService is a test double for the loginService interface.
 // It returns whatever result/error is configured.
-type stubLoginService struct {
+type FakeLoginService struct {
 	result domainuser.LoginResult
 	err    error
 }
 
-func (s *stubLoginService) Login(_ context.Context, _, _ string) (domainuser.LoginResult, error) {
+func (s *FakeLoginService) Login(_ context.Context, _, _ string) (domainuser.LoginResult, error) {
 	return s.result, s.err
 }
 
@@ -50,7 +50,7 @@ var fixedExpiry = time.Date(2026, 1, 1, 1, 0, 0, 0, time.UTC)
 // TestLoginHandler_ValidCredentials_Returns200 verifies AC1:
 // a successful login returns 200 with token and expires_at in the body.
 func TestLoginHandler_ValidCredentials_Returns200(t *testing.T) {
-	svc := &stubLoginService{result: domainuser.LoginResult{Token: "tok123", ExpiresAt: fixedExpiry}}
+	svc := &FakeLoginService{result: domainuser.LoginResult{Token: "tok123", ExpiresAt: fixedExpiry}}
 	handler := pfmhttp.LoginHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/auth/login", loginBody("u@example.com", "pass"))
@@ -66,7 +66,7 @@ func TestLoginHandler_ValidCredentials_Returns200(t *testing.T) {
 // TestLoginHandler_InvalidCredentials_Returns401 verifies AC2 and AC3:
 // ErrLoginInvalidCredentials from the service produces a 401 with a generic message.
 func TestLoginHandler_InvalidCredentials_Returns401(t *testing.T) {
-	svc := &stubLoginService{
+	svc := &FakeLoginService{
 		err: fmt.Errorf("login: find user: %w", message.ErrLoginInvalidCredentials),
 	}
 	handler := pfmhttp.LoginHandler(svc)
@@ -83,7 +83,7 @@ func TestLoginHandler_InvalidCredentials_Returns401(t *testing.T) {
 // TestLoginHandler_EmptyEmail_Returns400 verifies that validation happens at the
 // handler boundary — an empty email is rejected with 400 before calling the service.
 func TestLoginHandler_EmptyEmail_Returns400(t *testing.T) {
-	svc := &stubLoginService{} // must not be called
+	svc := &FakeLoginService{} // must not be called
 	handler := pfmhttp.LoginHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/auth/login", loginBody("", "pass"))
@@ -101,7 +101,7 @@ func TestLoginHandler_EmptyEmail_Returns400(t *testing.T) {
 // TestLoginHandler_EmptyPassword_Returns400 verifies that an empty password
 // is rejected at the handler boundary with 400.
 func TestLoginHandler_EmptyPassword_Returns400(t *testing.T) {
-	svc := &stubLoginService{} // must not be called
+	svc := &FakeLoginService{} // must not be called
 	handler := pfmhttp.LoginHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/auth/login", loginBody("u@example.com", ""))
@@ -119,7 +119,7 @@ func TestLoginHandler_EmptyPassword_Returns400(t *testing.T) {
 // TestLoginHandler_BothFieldsEmpty_Returns400WithTwoViolations verifies that
 // validation collects all violations in a single pass (fail-all, not fail-fast).
 func TestLoginHandler_BothFieldsEmpty_Returns400WithTwoViolations(t *testing.T) {
-	svc := &stubLoginService{} // must not be called
+	svc := &FakeLoginService{} // must not be called
 	handler := pfmhttp.LoginHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/auth/login", loginBody("", ""))
@@ -136,7 +136,7 @@ func TestLoginHandler_BothFieldsEmpty_Returns400WithTwoViolations(t *testing.T) 
 // TestLoginHandler_MalformedJSON_Returns400 verifies that an unparseable body
 // is rejected with 400 before the service is called.
 func TestLoginHandler_MalformedJSON_Returns400(t *testing.T) {
-	svc := &stubLoginService{}
+	svc := &FakeLoginService{}
 	handler := pfmhttp.LoginHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/auth/login", strings.NewReader("{bad json}"))
@@ -151,7 +151,7 @@ func TestLoginHandler_MalformedJSON_Returns400(t *testing.T) {
 // TestLoginHandler_InfraError_Returns500 verifies that an unexpected infrastructure
 // error (DB down, token service failure) returns 500 with a generic server error.
 func TestLoginHandler_InfraError_Returns500(t *testing.T) {
-	svc := &stubLoginService{err: errors.New("connection refused")}
+	svc := &FakeLoginService{err: errors.New("connection refused")}
 	handler := pfmhttp.LoginHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/auth/login", loginBody("u@example.com", "pass"))
@@ -173,7 +173,7 @@ func TestLoginHandler_NilService_Panics(t *testing.T) {
 // BenchmarkLoginHandler_ValidRequest measures the per-request cost of the handler
 // on the happy path — JSON decode + validation + service call + JSON encode.
 func BenchmarkLoginHandler_ValidRequest(b *testing.B) {
-	svc := &stubLoginService{result: domainuser.LoginResult{Token: "tok", ExpiresAt: fixedExpiry}}
+	svc := &FakeLoginService{result: domainuser.LoginResult{Token: "tok", ExpiresAt: fixedExpiry}}
 	handler := pfmhttp.LoginHandler(svc)
 	body := loginBody("u@example.com", "pass")
 

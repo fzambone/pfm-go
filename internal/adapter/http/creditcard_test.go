@@ -44,12 +44,12 @@ func testSettings() domaincc.Settings {
 
 // --- CreateCreditCardSettingsHandler tests ---
 
-type stubCreateCCSettingsService struct {
+type FakeCreateCCSettingsService struct {
 	settings domaincc.Settings
 	err      error
 }
 
-func (s *stubCreateCCSettingsService) Create(_ context.Context, _ uuid.UUID, _ domaincc.CreateInput, _ uuid.UUID) (domaincc.Settings, error) {
+func (s *FakeCreateCCSettingsService) Create(_ context.Context, _ uuid.UUID, _ domaincc.CreateInput, _ uuid.UUID) (domaincc.Settings, error) {
 	return s.settings, s.err
 }
 
@@ -57,7 +57,7 @@ func (s *stubCreateCCSettingsService) Create(_ context.Context, _ uuid.UUID, _ d
 func TestCreateCCSettingsHandler_ValidRequest_Returns201(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateCCSettingsService{settings: testSettings()}
+	svc := &FakeCreateCCSettingsService{settings: testSettings()}
 	handler := pfmhttp.CreateCreditCardSettingsHandler(svc)
 
 	body := `{"closing_day":15,"due_day":25,"limit_amount":500000}`
@@ -79,7 +79,7 @@ func TestCreateCCSettingsHandler_ValidRequest_Returns201(t *testing.T) {
 func TestCreateCCSettingsHandler_NotCreditCard_ReturnsConflict(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateCCSettingsService{err: message.ErrCreditCardSettingsNotCreditCard}
+	svc := &FakeCreateCCSettingsService{err: message.ErrCreditCardSettingsNotCreditCard}
 	handler := pfmhttp.CreateCreditCardSettingsHandler(svc)
 
 	body := `{"closing_day":15,"due_day":25,"limit_amount":500000}`
@@ -96,7 +96,7 @@ func TestCreateCCSettingsHandler_NotCreditCard_ReturnsConflict(t *testing.T) {
 func TestCreateCCSettingsHandler_AlreadyExists_Returns409(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateCCSettingsService{err: message.ErrCreditCardSettingsExists}
+	svc := &FakeCreateCCSettingsService{err: message.ErrCreditCardSettingsExists}
 	handler := pfmhttp.CreateCreditCardSettingsHandler(svc)
 
 	body := `{"closing_day":15,"due_day":25,"limit_amount":500000}`
@@ -113,7 +113,7 @@ func TestCreateCCSettingsHandler_AlreadyExists_Returns409(t *testing.T) {
 func TestCreateCCSettingsHandler_ValidationError_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateCCSettingsService{
+	svc := &FakeCreateCCSettingsService{
 		err: &validate.ValidationError{
 			Violations: []validate.Violation{{Field: "closing_day", Message: "must be between 1 and 31"}},
 		},
@@ -134,7 +134,7 @@ func TestCreateCCSettingsHandler_ValidationError_Returns400(t *testing.T) {
 func TestCreateCCSettingsHandler_MalformedJSON_Returns400(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubCreateCCSettingsService{}
+	svc := &FakeCreateCCSettingsService{}
 	handler := pfmhttp.CreateCreditCardSettingsHandler(svc)
 
 	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{bad"))
@@ -153,12 +153,12 @@ func TestCreateCCSettingsHandler_NilService_Panics(t *testing.T) {
 
 // --- GetCreditCardSettingsHandler tests ---
 
-type stubGetCCSettingsService struct {
+type FakeGetCCSettingsService struct {
 	settings domaincc.Settings
 	err      error
 }
 
-func (s *stubGetCCSettingsService) FindByAccountID(_ context.Context, _ uuid.UUID) (domaincc.Settings, error) {
+func (s *FakeGetCCSettingsService) FindByAccountID(_ context.Context, _ uuid.UUID) (domaincc.Settings, error) {
 	return s.settings, s.err
 }
 
@@ -166,7 +166,7 @@ func (s *stubGetCCSettingsService) FindByAccountID(_ context.Context, _ uuid.UUI
 func TestGetCCSettingsHandler_ValidID_Returns200(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetCCSettingsService{settings: testSettings()}
+	svc := &FakeGetCCSettingsService{settings: testSettings()}
 	handler := pfmhttp.GetCreditCardSettingsHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -184,7 +184,7 @@ func TestGetCCSettingsHandler_ValidID_Returns200(t *testing.T) {
 func TestGetCCSettingsHandler_NotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubGetCCSettingsService{err: message.ErrCreditCardSettingsNotFound}
+	svc := &FakeGetCCSettingsService{err: message.ErrCreditCardSettingsNotFound}
 	handler := pfmhttp.GetCreditCardSettingsHandler(svc)
 
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -203,12 +203,12 @@ func TestGetCCSettingsHandler_NilService_Panics(t *testing.T) {
 
 // --- UpdateClosingDayHandler tests ---
 
-type stubUpdateClosingDayService struct {
+type FakeUpdateClosingDayService struct {
 	settings domaincc.Settings
 	err      error
 }
 
-func (s *stubUpdateClosingDayService) UpdateClosingDay(_ context.Context, _ uuid.UUID, _ domaincc.UpdateClosingDayInput, _ int, _ uuid.UUID) (domaincc.Settings, error) {
+func (s *FakeUpdateClosingDayService) UpdateClosingDay(_ context.Context, _ uuid.UUID, _ domaincc.UpdateClosingDayInput, _ int, _ uuid.UUID) (domaincc.Settings, error) {
 	return s.settings, s.err
 }
 
@@ -218,7 +218,7 @@ func TestUpdateClosingDayHandler_ValidRequest_Returns200(t *testing.T) {
 
 	updated := testSettings()
 	updated.ClosingDay = 20
-	svc := &stubUpdateClosingDayService{settings: updated}
+	svc := &FakeUpdateClosingDayService{settings: updated}
 	handler := pfmhttp.UpdateClosingDayHandler(svc)
 
 	body := `{"closing_day":20,"version":1}`
@@ -238,7 +238,7 @@ func TestUpdateClosingDayHandler_ValidRequest_Returns200(t *testing.T) {
 func TestUpdateClosingDayHandler_VersionConflict_Returns409(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubUpdateClosingDayService{err: message.ErrCreditCardSettingsVersionConflict}
+	svc := &FakeUpdateClosingDayService{err: message.ErrCreditCardSettingsVersionConflict}
 	handler := pfmhttp.UpdateClosingDayHandler(svc)
 
 	body := `{"closing_day":20,"version":1}`
@@ -259,12 +259,12 @@ func TestUpdateClosingDayHandler_NilService_Panics(t *testing.T) {
 
 // --- UpdateDueDayHandler tests ---
 
-type stubUpdateDueDayService struct {
+type FakeUpdateDueDayService struct {
 	settings domaincc.Settings
 	err      error
 }
 
-func (s *stubUpdateDueDayService) UpdateDueDay(_ context.Context, _ uuid.UUID, _ domaincc.UpdateDueDayInput, _ int, _ uuid.UUID) (domaincc.Settings, error) {
+func (s *FakeUpdateDueDayService) UpdateDueDay(_ context.Context, _ uuid.UUID, _ domaincc.UpdateDueDayInput, _ int, _ uuid.UUID) (domaincc.Settings, error) {
 	return s.settings, s.err
 }
 
@@ -274,7 +274,7 @@ func TestUpdateDueDayHandler_ValidRequest_Returns200(t *testing.T) {
 
 	updated := testSettings()
 	updated.DueDay = 10
-	svc := &stubUpdateDueDayService{settings: updated}
+	svc := &FakeUpdateDueDayService{settings: updated}
 	handler := pfmhttp.UpdateDueDayHandler(svc)
 
 	body := `{"due_day":10,"version":1}`
@@ -298,12 +298,12 @@ func TestUpdateDueDayHandler_NilService_Panics(t *testing.T) {
 
 // --- UpdateCreditLimitHandler tests ---
 
-type stubUpdateCreditLimitService struct {
+type FakeUpdateCreditLimitService struct {
 	settings domaincc.Settings
 	err      error
 }
 
-func (s *stubUpdateCreditLimitService) UpdateLimit(_ context.Context, _ uuid.UUID, _ domaincc.UpdateLimitInput, _ int, _ uuid.UUID) (domaincc.Settings, error) {
+func (s *FakeUpdateCreditLimitService) UpdateLimit(_ context.Context, _ uuid.UUID, _ domaincc.UpdateLimitInput, _ int, _ uuid.UUID) (domaincc.Settings, error) {
 	return s.settings, s.err
 }
 
@@ -313,7 +313,7 @@ func TestUpdateCreditLimitHandler_ValidRequest_Returns200(t *testing.T) {
 
 	updated := testSettings()
 	updated.LimitAmount = 1000000
-	svc := &stubUpdateCreditLimitService{settings: updated}
+	svc := &FakeUpdateCreditLimitService{settings: updated}
 	handler := pfmhttp.UpdateCreditLimitHandler(svc)
 
 	body := `{"limit_amount":1000000,"version":1}`
@@ -337,11 +337,11 @@ func TestUpdateCreditLimitHandler_NilService_Panics(t *testing.T) {
 
 // --- DeleteCreditCardSettingsHandler tests ---
 
-type stubDeleteCCSettingsService struct {
+type FakeDeleteCCSettingsService struct {
 	err error
 }
 
-func (s *stubDeleteCCSettingsService) Delete(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
+func (s *FakeDeleteCCSettingsService) Delete(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
 	return s.err
 }
 
@@ -349,7 +349,7 @@ func (s *stubDeleteCCSettingsService) Delete(_ context.Context, _ uuid.UUID, _ u
 func TestDeleteCCSettingsHandler_Success_Returns204(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeleteCCSettingsService{}
+	svc := &FakeDeleteCCSettingsService{}
 	handler := pfmhttp.DeleteCreditCardSettingsHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/", nil)
@@ -366,7 +366,7 @@ func TestDeleteCCSettingsHandler_Success_Returns204(t *testing.T) {
 func TestDeleteCCSettingsHandler_NotFound_Returns404(t *testing.T) {
 	t.Parallel()
 
-	svc := &stubDeleteCCSettingsService{err: message.ErrCreditCardSettingsNotFound}
+	svc := &FakeDeleteCCSettingsService{err: message.ErrCreditCardSettingsNotFound}
 	handler := pfmhttp.DeleteCreditCardSettingsHandler(svc)
 
 	r := httptest.NewRequest(http.MethodDelete, "/", nil)
