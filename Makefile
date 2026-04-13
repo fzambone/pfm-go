@@ -1,4 +1,4 @@
-.PHONY: help up down logs ps clean db-shell db-logs otel-logs build-docker test test-integration coverage vuln lint build generate ci
+.PHONY: help up down logs ps clean db-shell db-logs otel-logs build-docker test test-integration coverage vuln lint build generate check-openapi ci
 
 # GOBIN resolves to the user's GOPATH bin directory where tools like govulncheck and sqlc live.
 # Install govulncheck once with: go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -81,6 +81,20 @@ generate: ## Regenerate sqlc Go code and OpenAPI spec from handler annotations
 	$(GOBIN)/sqlc generate
 	$(GOBIN)/swag init -g cmd/pfm/main.go --output api/ --outputTypes yaml
 
+check-openapi: ## Verify OpenAPI spec matches handler annotations (non-destructive — uses a temp dir)
+	@TMPDIR=$$(mktemp -d) && \
+	$(GOBIN)/swag init -g cmd/pfm/main.go --output $$TMPDIR --outputTypes yaml --quiet > /dev/null 2>&1; \
+	if diff -q api/swagger.yaml $$TMPDIR/swagger.yaml > /dev/null 2>&1; then \
+		printf 'OpenAPI spec is up to date.\n'; \
+		rm -rf $$TMPDIR; \
+	else \
+		printf 'FAIL: OpenAPI spec has drifted from handler annotations.\n'; \
+		printf 'Run '\''make generate'\'' to update api/swagger.yaml, then commit the result.\n\n'; \
+		diff api/swagger.yaml $$TMPDIR/swagger.yaml || true; \
+		rm -rf $$TMPDIR; \
+		exit 1; \
+	fi
+
 vuln: ## Run govulncheck vulnerability scan
 	$(GOBIN)/govulncheck ./...
 
@@ -99,11 +113,13 @@ ci: ## Run full CI gate (lint + coverage + vuln + integration tests + build) —
 	$(MAKE) vuln             > .ci-logs/vuln.log          2>&1 & p3=$$!; \
 	$(MAKE) build            > .ci-logs/build.log         2>&1 & p4=$$!; \
 	$(MAKE) test-integration > .ci-logs/integration.log   2>&1 & p5=$$!; \
+	$(MAKE) check-openapi    > .ci-logs/openapi.log       2>&1 & p6=$$!; \
 	wait $$p1 && printf '  lint         ✓\n' || { printf '  lint         ✗\n'; FAILED=1; }; \
 	wait $$p2 && printf '  coverage     ✓\n' || { printf '  coverage     ✗\n'; FAILED=1; }; \
 	wait $$p3 && printf '  vuln         ✓\n' || { printf '  vuln         ✗\n'; FAILED=1; }; \
 	wait $$p4 && printf '  build        ✓\n' || { printf '  build        ✗\n'; FAILED=1; }; \
 	wait $$p5 && printf '  integration  ✓\n' || { printf '  integration  ✗\n'; FAILED=1; }; \
+	wait $$p6 && printf '  openapi      ✓\n' || { printf '  openapi      ✗\n'; FAILED=1; }; \
 	if [ $$FAILED -ne 0 ]; then \
 		printf '\nCI FAILED. Logs:\n'; \
 		for f in .ci-logs/*.log; do printf '\n── %s ──\n' "$$f"; cat "$$f"; done; \
