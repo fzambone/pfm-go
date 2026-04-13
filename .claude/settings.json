@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(go:*)",
+      "Bash(make:*)",
+      "Bash(golangci-lint:*)",
+      "Bash(goose:*)",
+      "Bash(sqlc:*)",
+      "Bash(gh:*)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(govulncheck:*)",
+      "Bash(python3:*)",
+      "Bash(podman:*)",
+      "Bash(/opt/podman/bin/podman:*)",
+      "Bash(docker:*)",
+      "Bash(fly:*)",
+      "Bash(brew:*)",
+      "Bash(TESTCONTAINERS_RYUK_DISABLED=true go test:*)",
+      "Bash(TESTCONTAINERS_RYUK_DISABLED=true make:*)",
+      "Read(//Users/fzambone/**)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:pfm-go-api.zambone.dev)",
+      "WebSearch",
+      "mcp__plugin_context-mode_context-mode__ctx_execute",
+      "mcp__plugin_context-mode_context-mode__ctx_execute_file"
+    ]
+  }
+}
