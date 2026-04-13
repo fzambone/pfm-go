@@ -105,6 +105,12 @@ Review the actual code — read every changed file, check imports, verify tests 
 - [ ] Migration has both `-- +goose Up` and `-- +goose Down` blocks
 - [ ] Migration is backward-compatible (no direct column renames or drops)
 
+## Performance
+- [ ] No N+1 queries — repo methods are not called inside loops; use batch queries or JOINs
+- [ ] Queries filtering on non-indexed columns have a justification or a migration adding the index
+- [ ] No unbounded result sets — every list query that could return large datasets has a LIMIT or cursor pagination
+- [ ] Large payloads stream rather than buffer — avoid loading entire result sets into memory before responding
+
 ## Final Verification
 - [ ] Code compiles: `go build ./...`
 - [ ] Tests pass: `go test ./... -race -count=1`
@@ -128,6 +134,7 @@ Categories:
 8. Architecture
 9. Go-Specific Traps
 10. SQL & Database (when applicable)
+11. Performance
 
 **Tracing scope:** Apply the Tracing category only to files in `internal/adapter/` and `internal/platform/`.
 Domain packages (`internal/domain/`) must NOT have tracing — flag it as a violation if they do.
