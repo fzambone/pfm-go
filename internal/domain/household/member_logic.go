@@ -50,7 +50,7 @@ func (l *HouseholdMemberLogic) CreateHouseholdUser(ctx context.Context, househol
 		// Step 1 — create the user (validation + hashing happen inside the adapter).
 		created, err := l.users.Create(txCtx, input, callerID)
 		if err != nil {
-			return err
+			return fmt.Errorf(message.ErrHouseholdLogicCreateUserStep, err)
 		}
 
 		// Step 2 — add the new user as a MEMBER of the household.
@@ -59,7 +59,7 @@ func (l *HouseholdMemberLogic) CreateHouseholdUser(ctx context.Context, househol
 			Role:   types.RoleMember,
 		}, callerID)
 		if err != nil {
-			return err
+			return fmt.Errorf(message.ErrHouseholdLogicAddMemberStep, err)
 		}
 
 		result = CreatedMember{User: created, Membership: membership}

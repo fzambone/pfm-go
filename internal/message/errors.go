@@ -221,7 +221,9 @@ const (
 	ErrHouseholdLogicRemoveMember = "household logic: remove member: %w"
 	ErrHouseholdLogicUpdateName   = "household logic: update name: %w"
 	ErrHouseholdLogicDeactivate   = "household logic: deactivate: %w"
-	ErrHouseholdLogicCreateUser   = "household logic: create household user: %w"
+	ErrHouseholdLogicCreateUser        = "household logic: create household user: %w"
+	ErrHouseholdLogicCreateUserStep    = "household logic: create user step: %w"
+	ErrHouseholdLogicAddMemberStep     = "household logic: add member step: %w"
 )
 
 // Account repository errors.
@@ -324,6 +326,7 @@ const (
 // Startup errors (used by cmd/pfm/main.go composition root).
 const (
 	ErrRunLoadConfig = "load config: %w"
+	ErrRunSeed       = "run seed: %w"
 	ErrRunLogLevel   = "parse log level %q: %w"
 	ErrRunTracerInit = "init tracer: %w"
 	ErrRunOpenDB     = "open database: %w"

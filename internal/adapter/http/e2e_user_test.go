@@ -56,7 +56,17 @@ func TestE2E_HouseholdUser_Create_Success(t *testing.T) {
 	}, "")
 	require.Equal(t, http.StatusOK, w.Code, "login new user: %s", w.Body.String())
 	login := decodeJSON(t, w)
-	assert.NotEmpty(t, login["token"])
+	newUserToken := login["token"].(string)
+	assert.NotEmpty(t, newUserToken)
+
+	// The new user can access their own household.
+	w = env.do(t, http.MethodGet, "/api/v1/households/"+householdID, nil, newUserToken)
+	assert.Equal(t, http.StatusOK, w.Code, "new user should access own household: %s", w.Body.String())
+
+	// The new user cannot access a different household.
+	_, _, otherHouseholdID := env.bootstrapAdmin(t, ctx, "other-admin@example.com", "Other Admin", "secret1234")
+	w = env.do(t, http.MethodGet, "/api/v1/households/"+otherHouseholdID, nil, newUserToken)
+	assert.Equal(t, http.StatusForbidden, w.Code, "new user should not access another household")
 }
 
 // TestE2E_HouseholdUser_Create_NoToken_Returns401 verifies that an unauthenticated

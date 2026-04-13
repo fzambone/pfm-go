@@ -65,7 +65,7 @@ func run() error {
 		HouseholdName: cfg.HouseholdName,
 	})
 	if err != nil {
-		return fmt.Errorf(message.ErrSeedTransaction, err)
+		return fmt.Errorf(message.ErrRunSeed, err)
 	}
 
 	if result.AlreadySeeded {
