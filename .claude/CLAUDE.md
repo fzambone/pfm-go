@@ -12,6 +12,24 @@
 - **Ship with `/project:ship`.** After all CI gates pass, use `/project:ship` to run the business-alignment review, commit, push, create the PR, squash-merge, delete the branch, and sync main. Do not do these steps manually.
 - **Fetch GitHub issues via `gh`.** Use `gh issue view <N>` to read issue details and acceptance criteria.
 
+## Skill Routing — Use the Right Skill
+
+Always use the matching skill instead of working ad-hoc. If unsure, ask.
+
+| Situation | Skill | Notes |
+|-----------|-------|-------|
+| New feature or bug fix from an issue | `/project:implement` | Start here for all story work |
+| Bug report, error, or unexpected behavior | `/project:triage` | Investigate before fixing |
+| Break down a large issue into sub-tasks | `/project:breakdown` | Before implementing complex stories |
+| Plan a milestone or group of issues | `/project:milestone` | For roadmap-level planning |
+| Deep dive on a Go concept or pattern | `/project:learn` | Teaching-oriented explanation |
+| Review code before committing | `/project:review` | Run after implementation, before commit |
+| Verify issue acceptance criteria are met | `/project:verify-issue` | Run after review, before commit |
+| Review test quality and coverage | `/review-tests` | Focused test review |
+| Commit, push, PR, merge, and sync | `/project:ship` | After all gates pass |
+| Check API contract consistency | `/project:openapi-check` | After changing HTTP handlers or routes |
+| Identify and track technical debt | `/project:debt` | When spotting shortcuts or deferred work |
+
 ## Decision Points — Always Stop and Ask
 
 Stop and surface a decision when:
