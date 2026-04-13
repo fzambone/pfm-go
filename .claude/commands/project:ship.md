@@ -124,6 +124,64 @@ Confirm the PR number before merging.
 
 ---
 
+## Step 6.5 — Cross-repo API impact check
+
+After merging, inspect the PR diff for API-affecting changes.
+
+```
+gh pr diff <PR-number> --name-only
+```
+
+**API-affecting paths:**
+- `internal/adapter/http/` — handlers, middleware, response mappings
+- `api/swagger.yaml` — spec changes (including docs-only updates)
+
+**If none of these paths appear in the diff:** skip this step silently. Proceed to Step 7.
+
+**If any of these paths appear:**
+
+1. List the affected files from the diff output.
+2. Extract the changed endpoints: scan the diff for lines like `+func (h *Handler)` or changed path annotations (`// @Router`).
+3. Ask: **"API-affecting changes detected. Create a tracking issue in pfm-ui-react? (y/n)"**
+
+If **no**: skip. Proceed to Step 7.
+
+If **yes**: create the issue:
+
+```
+gh issue create --repo fzambone/pfm-ui-react \
+  --title "API update: sync frontend with pfm-go #<PR-number>" \
+  --body "$(cat <<'EOF'
+## Context
+
+pfm-go PR #<PR-number> shipped changes that affect the API contract.
+Frontend may need corresponding updates.
+
+## pfm-go PR
+<PR-url>
+
+## API-affecting files changed
+- <file 1>
+- <file 2>
+...
+
+## Endpoints affected
+- <endpoint or "see diff for details">
+...
+
+## Action required
+Review the pfm-go diff and update:
+- API client calls in `src/`
+- TypeScript types if request/response shapes changed
+- Any UI that surfaces affected endpoints
+EOF
+)"
+```
+
+Note the created issue URL. Include it in the Step 8 report.
+
+---
+
 ## Step 7 — Sync main
 
 ```
@@ -136,12 +194,13 @@ git pull
 ## Step 8 — Report
 
 ```
-Branch:       feat/<scope>-<description>-<N>
-PR:           #<number> — <url>
-Merged:       squash-merge ✓
-Branch:       deleted ✓
-Main:         synced ✓
-Business:     PASS / NEEDS DISCUSSION
+Branch:           feat/<scope>-<description>-<N>
+PR:               #<number> — <url>
+Merged:           squash-merge ✓
+Branch:           deleted ✓
+Main:             synced ✓
+Business:         PASS / NEEDS DISCUSSION
+Frontend impact:  <issue url> created / none detected / skipped
 
 Story #<N> is done.
 ```
