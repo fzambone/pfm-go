@@ -44,16 +44,17 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
       - name: Smoke test
-        # Probe /health/ready on the live Fly.io URL to confirm the deployed
-        # binary is actually healthy. flyctl deploy --wait-timeout already waited
-        # for Fly.io's internal health check to pass, so the first attempt will
-        # almost always succeed. The 10-retry window (50 s total) absorbs edge
-        # cases: DNS propagation delay or a transient network blip between the
-        # GitHub Actions runner and Fly.io.
+        # Probe /health/ready through the custom domain to confirm the deployed
+        # binary is healthy AND the full Cloudflare → Fly.io path is functioning.
+        # flyctl deploy --wait-timeout already waited for Fly.io's internal health
+        # check to pass, so the first attempt will almost always succeed. The
+        # 10-retry window (50 s total) absorbs edge cases: Cloudflare propagation
+        # delay or a transient network blip between the GitHub Actions runner and
+        # Cloudflare.
         id: smoke
         run: |
           for i in $(seq 1 10); do
-            if curl -sf --max-time 10 https://pfm-go-api.fly.dev/health/ready; then
+            if curl -sf --max-time 10 https://pfm-go-api.zambone.dev/health/ready; then
               echo "Smoke test passed on attempt $i"
               exit 0
             fi

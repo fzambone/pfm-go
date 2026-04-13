@@ -13,6 +13,8 @@ primary_region = 'gru'
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
+  # Custom domain: pfm-go-api.zambone.dev — registered via `flyctl certs add` (pfm-infra#4).
+  # Cloudflare proxies all client traffic through this domain to the Fly.io origin.
 
   [[http_service.checks]]
     grace_period = '10s'
